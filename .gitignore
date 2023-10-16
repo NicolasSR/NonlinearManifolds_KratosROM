@@ -1,0 +1,10 @@
+*.npy
+*.post.lst
+*.post.bin
+*.post.res
+*.post.msh
+*.odp
+**/__pycache__/
+/saved_models/
+/datasets_two_forces_dense_extended/
+

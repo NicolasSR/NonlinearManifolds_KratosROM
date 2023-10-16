@@ -1,0 +1,20 @@
+{
+    "rom_manager": true,
+    "train_hrom": false,
+    "run_hrom": false,
+    "projection_strategy": "custom",
+    "assembling_strategy": "global",
+    "rom_format": "json",
+    "rom_settings": {
+        "nodal_unknowns": [
+            "DISPLACEMENT_X",
+            "DISPLACEMENT_Y"
+        ],
+        "number_of_rom_dofs": 0
+    },
+    "hrom_settings": {
+        "hrom_format": "json"
+    },
+    "nodal_modes": {},
+    "elements_and_weights": {}
+}
