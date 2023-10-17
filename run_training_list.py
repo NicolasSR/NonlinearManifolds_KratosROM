@@ -157,32 +157,6 @@ if __name__ == "__main__":
 #         "models_path_root": 'saved_models/',
 #         "project_parameters_file":'ProjectParameters_tf.json'
 #    },
-    {
-        "sim_type": 'structural',
-        "name": None,
-        "architecture": {
-            "name": 'PODANN', # ['POD','Quad','PODANN]
-            "q_inf_size": 6,
-            "q_sup_size": 20,
-            "hidden_layers": [40,40],
-            "prepost_process": 'svd_white_nostand',
-            "opt_strategy": {
-                "name": 'tf_ronly', # ['tf_sonly', 'tf_ronly', 'tf_srmixed', 'tf_wonly']
-                "r_loss_type": 'diff',  # ['norm, 'diff']
-                "r_loss_log_scale": False,
-                "learning_rate": ('tri2', 0.001, 1e-6, 250, 2), # ('steps', 0.001, 10, 1e-6, 100), ('const', 0.001), ('tri2', 0.001, 1e-6, 250)
-                "batch_size": 1,
-                "epochs": 2000,
-            },
-            # "finetune_from": 'saved_models/PODANN/PODANN_tf_srmixed_diff_svd_white_nostand_Lay[40, 40]_Emb6.40_LRsteps0.001/',
-            "finetune_from": None,
-            "augmented": False,
-            "use_bias": False,
-        },
-        "dataset_path": 'datasets_two_forces_dense_extended/',
-        "models_path_root": 'saved_models/',
-        "project_parameters_file":'ProjectParameters_tf.json'
-   },
    {
         "sim_type": 'structural',
         "name": None,
@@ -193,7 +167,7 @@ if __name__ == "__main__":
             "hidden_layers": [40,40],
             "prepost_process": 'svd_white_nostand',
             "opt_strategy": {
-                "name": 'tf_ronly', # ['tf_sonly', 'tf_ronly', 'tf_srmixed', 'tf_wonly']
+                "name": 'tf_sonly', # ['tf_sonly', 'tf_ronly', 'tf_srmixed', 'tf_wonly']
                 "r_loss_type": 'diff',  # ['norm, 'diff']
                 "r_loss_log_scale": False,
                 "learning_rate": ('tri2', 0.001, 1e-6, 250, 10), # ('steps', 0.001, 10, 1e-6, 100), ('const', 0.001), ('tri2', 0.001, 1e-6, 250)
@@ -222,7 +196,7 @@ if __name__ == "__main__":
                 "name": 'tf_ronly', # ['tf_sonly', 'tf_ronly', 'tf_srmixed', 'tf_wonly']
                 "r_loss_type": 'diff',  # ['norm, 'diff']
                 "r_loss_log_scale": False,
-                "learning_rate": ('steps', 0.001, 10, 1e-6, 500), # ('steps', 0.001, 10, 1e-6, 100), ('const', 0.001), ('tri2', 0.001, 1e-6, 250)
+                "learning_rate": ('tri2', 0.001, 1e-6, 250, 10), # ('steps', 0.001, 10, 1e-6, 100), ('const', 0.001), ('tri2', 0.001, 1e-6, 250)
                 "batch_size": 1,
                 "epochs": 2000,
             },

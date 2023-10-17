@@ -77,7 +77,7 @@ if __name__ == "__main__":
 
     paths_list=[
         # 'Quad/Quad_least_squares_identity_Emb6',
-        'PODANN/PODANN_tf_ronly_diff_noLog_svd_white_nostand_Lay[40, 40]_Emb6.20_LRtri20.001_lrscale10',
+        'PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[40, 40]_Emb6.20_LRtri20.001',
     ]
 
     reference_snapshots_filename='datasets_two_forces_dense_extended/FOM/FOM_equalForces_3000steps.npy'
@@ -89,7 +89,7 @@ if __name__ == "__main__":
 
         # Get snapshots
         S_rom = np.load('saved_models/'+model_path+'/NMROM_simulation_results/ROM_snaps.npy')
-        # S_rom = np.load('saved_models/'+model_path+'/reconstruction_evaluation_results/recons_FOM_equalForces_300step_bestr_.npy')
+        # S_rom = np.load('saved_models/'+model_path+'/reconstruction_evaluation_results/recons_FOM_equalForces_300step_bestx_.npy')
         S_fom = np.load(reference_snapshots_filename)
 
         print('Shape S_fom:', S_fom.shape)
@@ -116,7 +116,7 @@ if __name__ == "__main__":
         F_FOM = np.load(reference_forces_filename)
         r_force = kratos_simulation.get_r_forces_array(S_rom, F_FOM)
         np.save('saved_models/'+model_path+'/NMROM_simulation_results/ROM_residuals.npy', r_force)
-        # np.save('saved_models/'+model_path+'/reconstruction_evaluation_results/reactions_recons_FOM_equalForces_300step_bestr_.npy', r_force)
+        # np.save('saved_models/'+model_path+'/reconstruction_evaluation_results/reactions_recons_FOM_equalForces_300step_bestx_.npy', r_force)
 
         calculate_R_norm_error(r_force)
         plot_l2_errors(r_force,0.0)

@@ -10,7 +10,7 @@ def evaluate(working_path, model_path, GID_FOM_filename, best, test_validation=F
 if __name__ == "__main__":
     paths_list=[
             # 'Quad/Quad_least_squares_identity_Emb6',
-            'PODANN/PODANN_tf_ronly_diff_noLog_svd_white_nostand_Lay[40, 40]_Emb6.20_LRtri20.001_lrscale10',
+            'PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[40, 40]_Emb6.20_LRtri20.001',
             ]
     
     GID_FOM_filename='FOM_equalForces_300steps.npy'

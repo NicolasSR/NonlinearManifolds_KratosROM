@@ -179,7 +179,8 @@ class NMROM_Simulator():
             print('Using progressive parameters strategy')
             UpdateProjectParameters = UpdateProjectParametersNone
             # project_parameters_name = "ProjectParameters_recons.json"
-            project_parameters_name = "ProjectParameters_recons_3000steps.json"
+            # project_parameters_name = "ProjectParameters_recons_3000steps.json"
+            project_parameters_name = "ProjectParameters_recons_repeatedStep.json"
             mu = [None]
         elif parameters_selection_strategy == "random":
             print('Using random parameters strategy')

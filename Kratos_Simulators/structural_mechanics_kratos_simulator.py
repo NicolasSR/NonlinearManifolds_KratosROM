@@ -222,6 +222,35 @@ class StructuralMechanics_KratosSimulator():
         
         return err_w, v_loss_w
     
+    def get_v_loss_wdiffdiff_(self, y_pred, y_true, b_true):
+        
+        A = self.strategy.GetSystemMatrix()
+        b = self.strategy.GetSystemVector()
+        self.space.SetToZeroMatrix(A)
+        self.space.SetToZeroVector(b)
+
+        v_loss_w = self.space.CreateEmptyVectorPointer()
+        self.space.ResizeVector(v_loss_w, self.space.Size(b))
+        self.space.SetToZeroVector(v_loss_w)
+
+        self.project_prediction_vectorial_optim(y_pred)
+
+        self.buildsol.Build(self.scheme, self.modelpart, A, b)
+
+        b=np.expand_dims(np.array(b, copy=False), axis=0)
+        err_w=np.matmul(b_true-b, y_true)
+        exu_vec=(err_w*y_true)[0].copy()
+
+        exu_vec=KMP.Vector(exu_vec)
+
+        self.space.TransposeMult(A,exu_vec,v_loss_w)
+
+        v_loss_w=np.expand_dims(np.array(v_loss_w, copy=False),axis=0)
+        
+        # The negative sign we should apply to A is compensated by the derivative of the loss
+        
+        return err_w, v_loss_w
+    
     def get_err_rdiff_(self, y_pred, b_true):
         b_pred = self.get_r_(y_pred)
         err_r = b_pred - b_true
@@ -239,6 +268,13 @@ class StructuralMechanics_KratosSimulator():
         b_pred = self.get_r_(y_pred)
         b_pred=np.array(b_pred[0], copy=False)
         err_w=np.multiply(y_true, b_true)-np.multiply(y_pred, b_pred)
+        err_w=np.expand_dims(err_w, axis=0)
+        return err_w
+    
+    def get_err_wdiffdiff_(self, y_pred, y_true, b_true):
+        b_pred = self.get_r_(y_pred)
+        b_pred=np.array(b_pred[0], copy=False)
+        err_w=np.matmul(b_true-b_pred, y_true)
         err_w=np.expand_dims(err_w, axis=0)
         return err_w
     
@@ -340,6 +376,11 @@ class StructuralMechanics_KratosSimulator():
     def get_v_loss_welemdiff(self, y_pred, y_true, b_true):
         y,w = tf.numpy_function(self.get_v_loss_welemdiff_, [y_pred, y_true, b_true], (tf.float64, tf.float64))
         return y,w
+    
+    @tf.function(input_signature=(tf.TensorSpec(None, tf.float64), tf.TensorSpec(None, tf.float64), tf.TensorSpec(None, tf.float64)))
+    def get_v_loss_wdiffdiff(self, y_pred, y_true, b_true):
+        y,w = tf.numpy_function(self.get_v_loss_wdiffdiff_, [y_pred, y_true, b_true], (tf.float64, tf.float64))
+        return y,w
 
     @tf.function(input_signature=(tf.TensorSpec(None, tf.float64), tf.TensorSpec(None, tf.float64)))
     def get_r_wdiff(self, y_pred, b_true):
@@ -349,6 +390,11 @@ class StructuralMechanics_KratosSimulator():
     @tf.function(input_signature=(tf.TensorSpec(None, tf.float64), tf.TensorSpec(None, tf.float64), tf.TensorSpec(None, tf.float64)))
     def get_err_welemdiff(self, y_pred, y_true, b_true):
         y = tf.numpy_function(self.get_err_welemdiff_, [y_pred, y_true, b_true], (tf.float64))
+        return y
+    
+    @tf.function(input_signature=(tf.TensorSpec(None, tf.float64), tf.TensorSpec(None, tf.float64), tf.TensorSpec(None, tf.float64)))
+    def get_err_wdiffdiff(self, y_pred, y_true, b_true):
+        y = tf.numpy_function(self.get_err_wdiffdiff_, [y_pred, y_true, b_true], (tf.float64))
         return y
     
     def get_r_array(self, samples):

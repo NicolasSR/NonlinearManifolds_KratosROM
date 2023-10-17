@@ -64,7 +64,7 @@ if __name__ == "__main__":
     snapshot_mat_filename=dataset_path+"FOM/FOM_for_recons.npy"
     pointload_mat_filename=dataset_path+"FOM/POINTLOADS_for_recons.npy"
 
-    with open(dataset_path+"ProjectParameters_recons_3000steps.json", 'r') as parameter_file:
+    with open(dataset_path+"ProjectParameters_recons_repeatedStep.json", 'r') as parameter_file:
         parameters = KratosMultiphysics.Parameters(parameter_file.read())
 
     analysis_stage_module_name = parameters["analysis_stage"].GetString()
