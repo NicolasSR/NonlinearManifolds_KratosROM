@@ -93,12 +93,12 @@ class W_Only_Strategy_KerasModel(keras.Model):
             for i in range(len(total_gradients)):
                 total_gradients[i]=self.sample_gradient_sum_functions_list[i](total_gradients[i], grad_loss[i], batch_len)
 
-        self.optimizer.apply_gradients(zip(total_gradients, trainable_vars))
+        # self.optimizer.apply_gradients(zip(total_gradients, trainable_vars))
 
         # Compute our own metrics
-        self.loss_w_tracker.update_state(total_loss_w)
-        return {"loss_w": self.loss_w_tracker.result()}
-        # return 
+        # self.loss_w_tracker.update_state(total_loss_w)
+        # return {"loss_w": self.loss_w_tracker.result()}
+        return total_loss_w, total_gradients
 
     def test_step(self, data):
         input_batch, (target_snapshot_batch,target_aux_batch) = data
@@ -137,7 +137,7 @@ class W_Only_Strategy_KerasModel(keras.Model):
         
         return [self.loss_w_tracker]
     
-    def test_gradients(self, data, crop_mat_tf, crop_mat_scp):
+    """ def test_gradients(self, data, crop_mat_tf, crop_mat_scp):
         import matplotlib.pyplot as plt
 
         input_batch, (target_snapshot_batch,target_aux_batch) = data
@@ -197,4 +197,93 @@ class W_Only_Strategy_KerasModel(keras.Model):
         plt.xscale("log")
         plt.yscale("log")
         plt.legend(loc="upper left")
+        plt.show() """
+
+    def test_gradients(self, data, crop_mat_tf, crop_mat_scp):
+        import matplotlib.pyplot as plt
+
+        input_batch, (target_snapshot_batch,target_aux_batch) = data
+
+        sample_id=np.random.randint(0, input_batch.shape[0]-1)
+        input=tf.expand_dims(input_batch[sample_id],axis=0)
+        target_snapshot=tf.expand_dims(target_snapshot_batch[sample_id],axis=0)
+        target_aux=tf.expand_dims(target_aux_batch[sample_id],axis=0)
+
+        v_list=[]
+        train_var_init_values=[]
+        v_norm=0.0
+        for trainable_var in self.trainable_variables:
+            v=np.random.rand(*trainable_var.shape.as_list())
+            v_norm+=np.linalg.norm(v)**2
+            v_list.append(v)
+            train_var_init_values.append(tf.identity(trainable_var))
+        for v in v_list:
+            v/=np.sqrt(v_norm)
+
+        v_norm_check = 0.0
+        for i, trainable_var in enumerate(v_list):
+            # print(trainable_var)
+            v_norm_check+=np.linalg.norm(trainable_var)**2
+        print('Base noise L2 Norm: ', np.sqrt(v_norm_check))
+
+        # print(v_norm)
+        # print(v_list)
+
+        eps_vec = np.logspace(1, 10, 100)/1e9
+
+        err_vec=[]
+        for eps in eps_vec:
+
+            for i, trainable_var in enumerate(self.trainable_variables):
+                trainable_var.assign(train_var_init_values[i])
+
+            v_norm_check = 0.0
+            for i, trainable_var in enumerate(self.trainable_variables):
+                # print(trainable_var)
+                v_norm_check+=np.linalg.norm(trainable_var)**2
+            print('Init step norm: ', np.sqrt(v_norm_check))
+
+            total_loss_w_o, total_gradients_o = self.train_step((input,(target_snapshot,target_aux)))
+
+            for i, trainable_var in enumerate(self.trainable_variables):
+                trainable_var.assign_add(v_list[i]*eps)
+            
+            total_loss_w_ap, _ = self.train_step((input,(target_snapshot,target_aux)))
+
+            first_order_term=0.0
+            for i, gradient_o in enumerate(total_gradients_o):
+                first_order_term+=np.sum(np.multiply(gradient_o, v_list[i]*eps))
+
+            v_norm_check = 0.0
+            for i, v in enumerate(v_list):
+                v_norm_check+=np.linalg.norm(v*eps)**2
+            print('Noise norm: ', np.sqrt(v_norm_check))
+
+            v_norm_check = 0.0
+            for i, trainable_var in enumerate(self.trainable_variables):
+                # print(trainable_var)
+                v_norm_check+=np.linalg.norm(trainable_var)**2
+            print('Norm once noise is applied: ', np.sqrt(v_norm_check))
+
+            # exit()
+
+            # print(first_order_term)
+
+            err_vec.append(np.abs(total_loss_w_ap.numpy()[0,0]-total_loss_w_o.numpy()[0,0]-first_order_term))
+
+        square=np.power(eps_vec,2)
+        plt.plot(eps_vec, square, "--", label="square")
+        plt.plot(eps_vec, eps_vec, "--", label="linear")
+        plt.plot(eps_vec, err_vec, label="error")
+        # plt.plot(eps_vec, err_h, label="error_h")
+        # plt.plot(eps_vec, err_l, label="error_l")
+        plt.xscale("log")
+        plt.yscale("log")
+        plt.legend(loc="upper left")
         plt.show()
+
+
+
+            
+
+

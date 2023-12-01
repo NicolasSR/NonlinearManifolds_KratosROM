@@ -8,6 +8,26 @@ from keras.utils import io_utils
 
 def get_lr_schedule_func(lr_config):
 
+    def lr_sgdr_schedule(epoch, lr):
+        #('sgdr', 0.001, 1e-6, 250, 2)# References
+        """
+        Blog post: jeremyjordan.me/nn-learning-rate
+        Original paper: http://arxiv.org/abs/1608.03983
+        """
+        if epoch==0:
+            new_lr=lr_config[1]
+        else:
+            max_lr=lr_config[1]
+            min_lr=lr_config[2]
+            cycle_length=lr_config[3]
+            scale_factor=lr_config[4]
+            # cycle=np.floor(1+epoch/cycle_length)
+            cycle=np.floor(epoch/cycle_length)
+            x=np.abs(epoch/cycle_length-cycle)
+            # new_lr = min_lr+(max_lr-min_lr)*0.5*(1+np.cos(x*np.pi))/scale_factor**(cycle-1)
+            new_lr = min_lr+(max_lr-min_lr)*0.5*(1+np.cos(x*np.pi))/scale_factor**cycle
+        return new_lr
+
     def lr_tri2_schedule(epoch, lr):
         #('tri2', 0.001, 1e-6, 250, 2)
         if epoch==0:
@@ -41,6 +61,8 @@ def get_lr_schedule_func(lr_config):
         lr_schedule_func = lr_steps_schedule
     elif lr_config[0]=='tri2':
         lr_schedule_func = lr_tri2_schedule
+    elif lr_config[0]=='sgdr':
+        lr_schedule_func = lr_sgdr_schedule
     else:
         print('Unvalid lr scheduler')
         lr_schedule_func = None

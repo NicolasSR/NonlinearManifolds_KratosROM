@@ -36,25 +36,43 @@ class StructuralMechanics_KratosSimulator():
         self.var_utils = KMP.VariableUtils()
 
 
+    # def get_crop_matrix(self):
+    #     indices=[]
+    #     col=0
+    #     for i, node in enumerate(self.modelpart.Nodes):
+    #         if not node.IsFixed(KMP.DISPLACEMENT_X):
+    #             indices.append([2*i,col])
+    #             col+=1
+    #         if not node.IsFixed(KMP.DISPLACEMENT_Y):
+    #             indices.append([2*i+1,col])
+    #             col+=1
+    #     num_cols=col
+    #     num_rows=self.modelpart.NumberOfNodes()*2
+    #     values=np.ones(num_cols)
+    #     crop_mat_tf = tf.sparse.SparseTensor(
+    #         indices=indices,
+    #         values=values,
+    #         dense_shape=[num_rows,num_cols])
+    #     indices=np.asarray(indices)
+    #     crop_mat_scp = scipy.sparse.coo_array((values, (indices[:,0], indices[:,1])), shape=[num_rows,num_cols]).tocsr()
+        
+    #     return crop_mat_tf, crop_mat_scp
+
     def get_crop_matrix(self):
         indices=[]
-        col=0
         for i, node in enumerate(self.modelpart.Nodes):
-            if not node.IsFixed(KMP.DISPLACEMENT_X):
-                indices.append([2*i,col])
-                col+=1
-            if not node.IsFixed(KMP.DISPLACEMENT_Y):
-                indices.append([2*i+1,col])
-                col+=1
-        num_cols=col
+            if node.IsFixed(KMP.DISPLACEMENT_X):
+                indices.append([2*i,2*i])
+            if node.IsFixed(KMP.DISPLACEMENT_Y):
+                indices.append([2*i+1,2*i+1])
         num_rows=self.modelpart.NumberOfNodes()*2
-        values=np.ones(num_cols)
+        values=np.ones(len(indices))
         crop_mat_tf = tf.sparse.SparseTensor(
             indices=indices,
             values=values,
-            dense_shape=[num_rows,num_cols])
+            dense_shape=[num_rows,num_rows])
         indices=np.asarray(indices)
-        crop_mat_scp = scipy.sparse.coo_array((values, (indices[:,0], indices[:,1])), shape=[num_rows,num_cols]).tocsr()
+        crop_mat_scp = scipy.sparse.coo_array((values, (indices[:,0], indices[:,1])), shape=[num_rows,num_rows]).tocsr()
         
         return crop_mat_tf, crop_mat_scp
 
@@ -66,21 +84,6 @@ class StructuralMechanics_KratosSimulator():
             if node.IsFixed(KMP.DISPLACEMENT_Y):
                 indices.append(2*i+1)
         return indices
-    
-    def project_prediction_vectorial(self, y_pred, f_true):
-        values = y_pred[0]
-        values_full=np.zeros(self.modelpart.NumberOfNodes()*2)
-        values_full[self.non_cropped_dof_ids]+=values
-        values_x=values_full[0::2].copy()
-        values_y=values_full[1::2].copy()
-
-        dim = 2
-        nodes_array=self.modelpart.Nodes
-        x0_vec = self.var_utils.GetInitialPositionsVector(nodes_array,dim)
-        self.var_utils.SetSolutionStepValuesVector(nodes_array, KMP.DISPLACEMENT_X, values_x, 0)
-        self.var_utils.SetSolutionStepValuesVector(nodes_array, KMP.DISPLACEMENT_Y, values_y, 0)
-        x_vec=x0_vec+values_full
-        self.var_utils.SetCurrentPositionsVector(nodes_array,x_vec)
 
     def project_prediction_vectorial_optim(self, y_pred):
         values = y_pred[0]
@@ -94,9 +97,38 @@ class StructuralMechanics_KratosSimulator():
         x_vec=x0_vec+values_full
         self.var_utils.SetCurrentPositionsVector(nodes_array,x_vec)
 
+    def project_prediction_vectorial_optim_batch(self, y_pred):
+        values = y_pred
+        values_full=np.zeros(self.modelpart.NumberOfNodes()*2)
+        values_full+=values
+
+        dim = 2
+        nodes_array=self.modelpart.Nodes
+        x0_vec = self.var_utils.GetInitialPositionsVector(nodes_array,dim)
+        self.var_utils.SetSolutionStepValuesVector(nodes_array, KMP.DISPLACEMENT, values_full, 0)
+        x_vec=x0_vec+values_full
+        self.var_utils.SetCurrentPositionsVector(nodes_array,x_vec)
+
     def project_prediction_vectorial_optim_forces(self, y_pred, f_vectors):
         values = y_pred[0]
         forces = f_vectors[0]
+        values_full=np.zeros(self.modelpart.NumberOfNodes()*2)
+        values_full+=values
+
+        dim = 2
+        nodes_array=self.modelpart.Nodes
+        x0_vec = self.var_utils.GetInitialPositionsVector(nodes_array,dim)
+        self.var_utils.SetSolutionStepValuesVector(nodes_array, KMP.DISPLACEMENT, values_full, 0)
+        x_vec=x0_vec+values_full
+        self.var_utils.SetCurrentPositionsVector(nodes_array,x_vec)
+        
+        conditions_array=self.modelpart.Conditions
+        for i, condition in enumerate(conditions_array):
+            condition.SetValue(SMA.LINE_LOAD, forces[i])
+
+    def project_prediction_vectorial_optim_forces_batch(self, y_pred, f_vectors):
+        values = y_pred
+        forces = f_vectors
         values_full=np.zeros(self.modelpart.NumberOfNodes()*2)
         values_full+=values
 
@@ -136,6 +168,38 @@ class StructuralMechanics_KratosSimulator():
         
         return err_r, v_loss_r
     
+    def get_v_loss_rdiff_batch_(self, y_pred, b_true):
+        A = self.strategy.GetSystemMatrix()
+        b = self.strategy.GetSystemVector()
+
+        err_r_list=[]
+        v_loss_r_list=[]
+
+        for i in range(y_pred.shape[0]):
+            self.space.SetToZeroMatrix(A)
+            self.space.SetToZeroVector(b)
+
+            self.project_prediction_vectorial_optim_batch(y_pred[i])
+
+            self.buildsol.Build(self.scheme, self.modelpart, A, b)
+
+            err_r=KMP.Vector(b_true[i].copy()-b)
+
+            v_loss_r = self.space.CreateEmptyVectorPointer()
+            self.space.ResizeVector(v_loss_r, self.space.Size(b))
+            self.space.SetToZeroVector(v_loss_r)
+
+            self.space.TransposeMult(A,err_r,v_loss_r)
+            
+            err_r_list.append(np.expand_dims(np.array(err_r, copy=False),axis=0))
+            v_loss_r_list.append(np.expand_dims(np.array(v_loss_r, copy=False),axis=0))
+            # The negative sign we should apply to A is compensated by the derivative of the loss
+
+        err_r_batch = np.concatenate(err_r_list, axis = 0)
+        v_loss_r_batch = np.concatenate(v_loss_r_list, axis = 0)
+        
+        return err_r_batch, v_loss_r_batch
+    
     def get_v_loss_rnorm_(self, y_pred, f_vec):
         
         A = self.strategy.GetSystemMatrix()
@@ -163,6 +227,41 @@ class StructuralMechanics_KratosSimulator():
         v_loss_r=-np.expand_dims(np.array(v_loss_r, copy=False),axis=0) # This negation is to make A negative.
         
         return err_r, v_loss_r
+    
+    def get_v_loss_rnorm_batch_(self, y_pred, f_vec):
+        
+        A = self.strategy.GetSystemMatrix()
+        b = self.strategy.GetSystemVector()
+        v_loss_r = self.space.CreateEmptyVectorPointer()
+        self.space.ResizeVector(v_loss_r, self.space.Size(b))
+
+        err_r_list=[]
+        v_loss_r_list= []
+
+        for i in range(y_pred.shape[0]):
+            self.space.SetToZeroMatrix(A)
+            self.space.SetToZeroVector(b)
+            foo = self.space.CreateEmptyVectorPointer()
+            self.space.ResizeVector(foo, self.space.Size(b))
+            self.space.SetToZeroVector(foo)
+
+            self.project_prediction_vectorial_optim_forces_batch(y_pred[i], f_vec[i])
+
+            self.buildsol.Build(self.scheme, self.modelpart, A, b)
+            self.buildsol.ApplyDirichletConditions(self.scheme, self.modelpart, A, foo, b)
+
+            self.space.SetToZeroVector(v_loss_r)
+
+            err_r=b
+            self.space.TransposeMult(A,err_r,v_loss_r)
+
+            err_r_list.append(np.expand_dims(np.array(err_r, copy=True),axis=0))
+            v_loss_r_list.append(-np.expand_dims(np.array(v_loss_r, copy=False),axis=0)) # This negation is to make A negative.
+
+        err_r_batch = np.concatenate(err_r_list, axis = 0)
+        v_loss_r_batch = np.concatenate(v_loss_r_list, axis = 0)
+        
+        return err_r_batch, v_loss_r_batch
     
     def get_v_loss_wdiff_(self, y_pred, b_true):
         
@@ -256,8 +355,17 @@ class StructuralMechanics_KratosSimulator():
         err_r = b_pred - b_true
         return err_r
     
+    def get_err_rdiff_batch_(self, y_pred, b_true):
+        b_pred = self.get_r_batch_(y_pred)
+        err_r = b_pred - b_true
+        return err_r
+    
     def get_err_rnorm_(self, y_pred, f_vec):
         err_r = self.get_r_forces_(y_pred, f_vec)
+        return err_r
+    
+    def get_err_rnorm_batch_(self, y_pred, f_vec):
+        err_r = self.get_r_forces_batch_(y_pred, f_vec)
         return err_r
     
     def get_r_wdiff_(self, y_pred, b_true):
@@ -294,6 +402,80 @@ class StructuralMechanics_KratosSimulator():
         
         return b
     
+    def get_r_batch_(self, y_pred):
+
+        A = self.strategy.GetSystemMatrix()
+        b = self.strategy.GetSystemVector()
+
+        b_list=[]
+
+        for i in range(y_pred.shape[0]):
+            self.space.SetToZeroMatrix(A)
+            self.space.SetToZeroVector(b)
+
+            self.project_prediction_vectorial_optim_batch(y_pred[i])
+
+            self.buildsol.Build(self.scheme, self.modelpart, A, b)
+
+            b_list.append(np.expand_dims(np.array(b, copy=True),axis=0))
+
+        b_batch = np.concatenate(b_list, axis = 0)
+        
+        return b_batch
+    
+    def get_A_e_vec_batch_(self, y_true, err):
+        A = self.strategy.GetSystemMatrix()
+        b = self.strategy.GetSystemVector()
+
+        err_r_list=[]
+        v_loss_r_list=[]
+
+        for i in range(y_true.shape[0]):
+            self.space.SetToZeroMatrix(A)
+            self.space.SetToZeroVector(b)
+
+            self.project_prediction_vectorial_optim_batch(y_true[i])
+
+            self.buildsol.Build(self.scheme, self.modelpart, A, b)
+
+            err_r=KMP.Vector(err[i].copy())
+
+            v_loss_r = self.space.CreateEmptyVectorPointer()
+            self.space.ResizeVector(v_loss_r, self.space.Size(b))
+            self.space.SetToZeroVector(v_loss_r)
+
+            self.space.TransposeMult(A,err_r,v_loss_r)
+            
+            err_r_list.append(np.expand_dims(np.array(err_r, copy=False),axis=0))
+            v_loss_r_list.append(np.expand_dims(np.array(v_loss_r, copy=False),axis=0))
+            # The negative sign we should apply to A is compensated by the derivative of the loss
+
+        err_r_batch = np.concatenate(err_r_list, axis = 0)
+        v_loss_r_batch = np.concatenate(v_loss_r_list, axis = 0)
+        
+        return v_loss_r_batch
+    
+    def get_A_(self, y_pred):
+
+        A = self.strategy.GetSystemMatrix()
+        b = self.strategy.GetSystemVector()
+
+        xD  = self.space.CreateEmptyVectorPointer()
+        self.space.ResizeVector(xD, self.space.Size(b))
+
+        self.space.SetToZeroMatrix(A)
+        self.space.SetToZeroVector(b)
+        self.space.SetToZeroVector(xD)
+
+        self.project_prediction_vectorial_optim_batch(y_pred)
+
+        self.buildsol.Build(self.scheme, self.modelpart, A, b)
+        # self.buildsol.ApplyDirichletConditions(self.scheme,self.modelpart,A,xD,b)
+
+        Ascipy = scipy.sparse.csr_matrix((A.value_data(), A.index2_data(), A.index1_data()), shape=(A.Size1(), A.Size2()))
+        
+        return Ascipy
+    
     def get_r_forces_(self, y_pred, f_vectors):
         
         # aux = self.strategy.GetSystemMatrix()
@@ -311,6 +493,25 @@ class StructuralMechanics_KratosSimulator():
         b=np.expand_dims(np.array(b, copy=False),axis=0)
         
         return b
+    
+    def get_r_forces_batch_(self, y_pred, f_vectors):
+        
+        b = self.strategy.GetSystemVector()
+
+        b_list=[]
+
+        for i in range(y_pred.shape[0]):
+            self.space.SetToZeroVector(b)
+
+            self.project_prediction_vectorial_optim_forces_batch(y_pred[i], f_vectors[i])
+
+            self.buildsol.BuildRHS(self.scheme, self.modelpart, b)
+            
+            b_list.append(np.expand_dims(np.array(b, copy=True),axis=0))
+        
+        b_batch = np.concatenate(b_list, axis = 0)
+
+        return b_batch
     
     def get_r_forces_withDirich_(self, y_pred, f_vectors):
         
@@ -343,8 +544,18 @@ class StructuralMechanics_KratosSimulator():
         return y,w
     
     @tf.function(input_signature=(tf.TensorSpec(None, tf.float64), tf.TensorSpec(None, tf.float64)))
+    def get_v_loss_rdiff_batch(self, y_pred, b_true):
+        y,w = tf.numpy_function(self.get_v_loss_rdiff_batch_, [y_pred, b_true], (tf.float64, tf.float64))
+        return y,w
+    
+    @tf.function(input_signature=(tf.TensorSpec(None, tf.float64), tf.TensorSpec(None, tf.float64)))
     def get_err_rdiff(self, y_pred, b_true):
         y = tf.numpy_function(self.get_err_rdiff_, [y_pred, b_true], (tf.float64))
+        return y
+    
+    @tf.function(input_signature=(tf.TensorSpec(None, tf.float64), tf.TensorSpec(None, tf.float64)))
+    def get_err_rdiff_batch(self, y_pred, b_true):
+        y = tf.numpy_function(self.get_err_rdiff_batch_, [y_pred, b_true], (tf.float64))
         return y
 
     @tf.function(input_signature=[tf.TensorSpec(None, tf.float64)])
@@ -358,8 +569,18 @@ class StructuralMechanics_KratosSimulator():
         return y,w
     
     @tf.function(input_signature=(tf.TensorSpec(None, tf.float64), tf.TensorSpec(None, tf.float64)))
+    def get_v_loss_rnorm_batch(self, y_pred, f_vec):
+        y,w = tf.numpy_function(self.get_v_loss_rnorm_batch_, [y_pred, f_vec], (tf.float64, tf.float64))
+        return y,w
+    
+    @tf.function(input_signature=(tf.TensorSpec(None, tf.float64), tf.TensorSpec(None, tf.float64)))
     def get_err_rnorm(self, y_pred, f_vec):
         y = tf.numpy_function(self.get_err_rnorm_, [y_pred, f_vec], (tf.float64))
+        return y
+    
+    @tf.function(input_signature=(tf.TensorSpec(None, tf.float64), tf.TensorSpec(None, tf.float64)))
+    def get_err_rnorm_batch(self, y_pred, f_vec):
+        y = tf.numpy_function(self.get_err_rnorm_batch_, [y_pred, f_vec], (tf.float64))
         return y
     
     @tf.function(input_signature=(tf.TensorSpec(None, tf.float64), tf.TensorSpec(None, tf.float64)))

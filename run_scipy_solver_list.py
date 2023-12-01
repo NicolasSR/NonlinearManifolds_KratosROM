@@ -9,7 +9,7 @@ def solve(working_path, model_path, best):
 
 if __name__ == "__main__":
     paths_list=[
-            'Quad/Quad_least_squares_identity_Emb6',
+            'PODANN/PODANN_tf_ronly_diff_svd_white_nostand_Lay[40, 40]_Emb6.20_LRtri20.001_bis',
             ]
     
     parser = argparse.ArgumentParser()

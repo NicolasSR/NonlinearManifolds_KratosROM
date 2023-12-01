@@ -146,13 +146,13 @@ class Quad_Architecture_Factory(Base_Architecture_Factory):
 
     def NMROM_encoder(self, prepost_processor, enc_network):
         def encode_function(s):
-            s_norm = prepost_processor.preprocess_input_data(np.expand_dims(s, axis=0))
+            s_norm, _ = prepost_processor.preprocess_input_data(np.expand_dims(s, axis=0))
             q = enc_network(s_norm).numpy()
-            return q
+            return q, None
         return encode_function
     
     def NMROM_decoder(self, prepost_processor, dec_network):
-        def decode_function(q):
+        def decode_function(q, aux_norm_data):
             s_pred_norm = dec_network(q).numpy()
             s_pred = prepost_processor.postprocess_output_data(s_pred_norm, None)
             return s_pred
@@ -169,7 +169,7 @@ class Quad_Architecture_Factory(Base_Architecture_Factory):
                 del tape_d
                 return network_gradient
             
-            network_gradient = _get_network_gradient_tf(q).numpy()[0]
-            decoder_gradient = prepost_processor.postprocess_output_data(network_gradient, None)
+            network_gradient = _get_network_gradient_tf(q).numpy()[0].T
+            decoder_gradient = prepost_processor.postprocess_output_data(network_gradient, None).T
             return decoder_gradient
         return get_decoder_gradient

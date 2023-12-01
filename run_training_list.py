@@ -47,13 +47,13 @@ if __name__ == "__main__":
                 "name": 'tf_sonly', # ['tf_sonly', 'tf_ronly', 'tf_srmixed']
                 "r_loss_type": 'norm',  # ['norm, 'diff']
                 "r_loss_log_scale": True,
-                "learning_rate": ('steps', 1e-4, 10, 1e-6, 500), # ('steps', 0.001, 10, 1e-6, 100), ('const', 0.001)
+                "learning_rate": ('steps', 1e-4, 10, 1e-6, 500), # ('steps', 0.001, 10, 1e-6, 100), ('const', 0.001), ('tri2', 0.001, 1e-6, 250, 2), ('sgdr', 0.001, 1e-6, 250, 2)
                 "batch_size": 1,
                 "epochs": 1000,
                 # "wx": ('const', 0.001),
                 # "wr": ('const', 0.001),
             },
-            # "finetune_from": 'saved_models_newexample/CorrDecoder_RNormLoss_Dense_extended_Augmented_SVDWhiteNonStand_emb6_lay40_LRsteps_1000ep/',
+            # "finetune_from": 'saved_models/CorrDecoder_RNormLoss_Dense_extended_Augmented_SVDWhiteNonStand_emb6_lay40_LRsteps_1000ep/',
             "finetune_from": None,
             "augmented": True,
             "use_bias": False,
@@ -107,6 +107,23 @@ if __name__ == "__main__":
    ]
     
     train_configs_list = [
+#     {
+#         "sim_type": 'fluid',
+#         "name": None,
+#         "architecture": {
+#             "name": 'POD', # ['POD','Quad','PODANN]
+#             "q_size": 200,
+#             "augmented": False,
+#             "opt_strategy": {
+#                 "r_loss_type": 'diff',  # ['norm, 'diff']
+#                 "r_loss_log_scale": False
+#             },
+#             "finetune_from": None,
+#         },
+#         "dataset_path": 'datasets_fluid_past_cylinder/',
+#         "models_path_root": 'saved_models/',
+#         "project_parameters_file":'ProjectParameters_tf.json'
+#    }
 #    {
 #         "sim_type": 'structural',
 #         "name": None,
@@ -115,12 +132,12 @@ if __name__ == "__main__":
 #             "q_size": 6,
 #             "prepost_process": 'scale_global', # ['scale_global', 'identity']
 #             "opt_strategy": {
-#                 "name": 'tf_ronly', # ['tf_sonly', 'tf_ronly', 'tf_srmixed', 'least_squares']
+#                 "name": 'least_squares', # ['tf_sonly', 'tf_ronly', 'tf_srmixed', 'least_squares']
 #                 "r_loss_type": 'norm',  # ['norm, 'diff']
 #                 "r_loss_log_scale": True,
 #                 "learning_rate": ('const', 1e-6), # ('steps', 0.001, 10, 1e-6, 100), ('const', 0.001)
-#                 "batch_size": 5000,
-#                 "epochs": 10,
+#                 # "batch_size": 1,
+#                 # "epochs": 1,
 #                 # "wx": ('const', 0.001),
 #                 # "wr": ('const', 0.001),
 #                 "add_init_noise": False
@@ -128,7 +145,33 @@ if __name__ == "__main__":
 #             "finetune_from": None,
 #             "augmented": False,
 #         },
-#         "dataset_path": 'datasets_two_forces_dense_extended/',
+#         "dataset_path": 'datasets_rubber_hyperelastic_cantilever/',
+#         "models_path_root": 'saved_models/',
+#         "project_parameters_file":'ProjectParameters_tf.json'
+#    },
+#    {
+#         "sim_type": 'fluid',
+#         "name": 'PODANN/r_loss_noFinetune',
+#         "architecture": {
+#             "name": 'PODANN', # ['POD','Quad','PODANN]
+#             "q_inf_size": 20,
+#             "q_sup_size": 200,
+#             "hidden_layers": [400,400],
+#             "prepost_process": 'svd_white_nostand_crop',
+#             "opt_strategy": {
+#                 "name": 'tf_ronly_cropped', # ['tf_sonly', 'tf_ronly', 'tf_srmixed', 'tf_wonly']
+#                 "r_loss_type": 'diff',  # ['norm, 'diff']
+#                 "r_loss_log_scale": False,
+#                 "learning_rate": ('sgdr', 1e-5, 1e-6, 1000, 2), # ('steps', 0.001, 10, 1e-6, 100), ('const', 0.001), ('tri2', 0.001, 1e-6, 250)
+#                 "batch_size": 16,
+#                 "epochs": 2000
+#             },
+#             # "finetune_from": 'saved_models/PODANN/PODANN_tf_srmixed_diff_svd_white_nostand_Lay[40, 40]_Emb6.40_LRsteps0.001/',
+#             "finetune_from": None,
+#             "augmented": False,
+#             "use_bias": False,
+#         },
+#         "dataset_path": 'datasets_fluid_past_cylinder/',
 #         "models_path_root": 'saved_models/',
 #         "project_parameters_file":'ProjectParameters_tf.json'
 #    },
@@ -136,25 +179,100 @@ if __name__ == "__main__":
 #         "sim_type": 'structural',
 #         "name": None,
 #         "architecture": {
-#             "name": 'PODANN', # ['POD','Quad','PODANN]
-#             "q_inf_size": 6,
-#             "q_sup_size": 20,
-#             "hidden_layers": [40,40],
-#             "prepost_process": 'svd_white_nostand',
+#             "name": 'POD', # ['POD','Quad','PODANN]
+#             "q_size": 20,
+#             "augmented": False,
 #             "opt_strategy": {
-#                 "name": 'tf_wonly', # ['tf_sonly', 'tf_ronly', 'tf_srmixed', 'tf_wonly']
 #                 "r_loss_type": 'diff',  # ['norm, 'diff']
-#                 "learning_rate": ('steps', 1e-3, 10, 1e-6, 500), # ('steps', 0.001, 10, 1e-6, 100), ('const', 0.001)
-#                 "batch_size": 1,
+#                 "r_loss_log_scale": False
+#             },
+#             "finetune_from": None,
+#         },
+#         "dataset_path": 'datasets_rubber_hyperelastic_cantilever_big_range/',
+#         "models_path_root": 'saved_models_cantilever_big_range/',
+#         "project_parameters_file":'ProjectParameters_tf.json'
+#    },
+#     {
+#         "sim_type": 'fluid',
+#         "name": None,
+#         "architecture": {
+#             "name": 'PODANN', # ['POD','Quad','PODANN]
+#             "q_inf_size": 20,
+#             "q_sup_size": 200,
+#             "hidden_layers": [400,400],
+#             "prepost_process": 'svd_white_nostand_crop',
+#             "opt_strategy": {
+#                 "name": 'tf_sonly_cropped', # ['tf_sonly', 'tf_ronly', 'tf_srmixed', 'tf_wonly']
+#                 "r_loss_type": 'diff',  # ['norm, 'diff']
+#                 "r_loss_log_scale": False,
+#                 "learning_rate": ('sgdr', 0.001, 1e-6, 500, 10), # ('steps', 0.001, 10, 1e-6, 100), ('const', 0.001), ('tri2', 0.001, 1e-6, 250)
+#                 "batch_size": 16,
+#                 "epochs": 2000
+#             },
+#             # "finetune_from": 'saved_models/PODANN/PODANN_tf_srmixed_diff_svd_white_nostand_Lay[40, 40]_Emb6.40_LRsteps0.001/',
+#             "finetune_from": None,
+#             "augmented": False,
+#             "use_bias": False,
+#             "use_dropout": 0.4,
+#         },
+#         "dataset_path": 'datasets_fluid_past_cylinder_bdf2/',
+#         "models_path_root": 'saved_models_fluid_bdf2/',
+#         "project_parameters_file":'ProjectParameters_tf.json'
+#    },
+#    {
+#         "sim_type": 'fluid',
+#         "name": None,
+#         "architecture": {
+#             "name": 'PODANN', # ['POD','Quad','PODANN]
+#             "q_inf_size": 20,
+#             "q_sup_size": 200,
+#             "hidden_layers": [400,400],
+#             "prepost_process": 'svd_white_nostand_crop',
+#             "opt_strategy": {
+#                 "name": 'tf_srmixed_cropped', # ['tf_sonly', 'tf_ronly', 'tf_srmixed', 'tf_wonly']
+#                 "r_loss_type": 'diff',  # ['norm, 'diff']
+#                 "r_loss_log_scale": False,
+#                 "learning_rate": ('sgdr', 0.001, 1e-6, 500, 10), # ('steps', 0.001, 10, 1e-6, 100), ('const', 0.001), ('tri2', 0.001, 1e-6, 250)
+#                 "batch_size": 16,
 #                 "epochs": 2000,
+#                 "wx": ('const', 0.2),
+#                 "wr": ('const', 0.8)
 #             },
 #             # "finetune_from": 'saved_models/PODANN/PODANN_tf_srmixed_diff_svd_white_nostand_Lay[40, 40]_Emb6.40_LRsteps0.001/',
 #             "finetune_from": None,
 #             "augmented": False,
 #             "use_bias": False,
 #         },
-#         "dataset_path": 'datasets_two_forces_dense_extended/',
-#         "models_path_root": 'saved_models/',
+#         "dataset_path": 'datasets_fluid_past_cylinder_bdf2/',
+#         "models_path_root": 'saved_models_fluid_bdf2/',
+#         "project_parameters_file":'ProjectParameters_tf.json'
+#    },
+#    {
+#         "sim_type": 'fluid',
+#         "name": None,
+#         "architecture": {
+#             "name": 'PODANN', # ['POD','Quad','PODANN]
+#             "q_inf_size": 20,
+#             "q_sup_size": 200,
+#             "hidden_layers": [400,400],
+#             "prepost_process": 'svd_white_nostand_crop',
+#             "opt_strategy": {
+#                 "name": 'tf_srmixed_cropped', # ['tf_sonly', 'tf_ronly', 'tf_srmixed', 'tf_wonly']
+#                 "r_loss_type": 'diff',  # ['norm, 'diff']
+#                 "r_loss_log_scale": False,
+#                 "learning_rate": ('sgdr', 0.001, 1e-6, 500, 10), # ('steps', 0.001, 10, 1e-6, 100), ('const', 0.001), ('tri2', 0.001, 1e-6, 250)
+#                 "batch_size": 16,
+#                 "epochs": 2000,
+#                 "wx": ('const', 0.01),
+#                 "wr": ('const', 0.99)
+#             },
+#             # "finetune_from": 'saved_models/PODANN/PODANN_tf_srmixed_diff_svd_white_nostand_Lay[40, 40]_Emb6.40_LRsteps0.001/',
+#             "finetune_from": None,
+#             "augmented": False,
+#             "use_bias": False,
+#         },
+#         "dataset_path": 'datasets_fluid_past_cylinder_bdf2/',
+#         "models_path_root": 'saved_models_fluid_bdf2/',
 #         "project_parameters_file":'ProjectParameters_tf.json'
 #    },
    {
@@ -162,53 +280,80 @@ if __name__ == "__main__":
         "name": None,
         "architecture": {
             "name": 'PODANN', # ['POD','Quad','PODANN]
-            "q_inf_size": 6,
-            "q_sup_size": 20,
-            "hidden_layers": [40,40],
+            "q_inf_size": 11,
+            "q_sup_size": 60,
+            "hidden_layers": [200,200],
             "prepost_process": 'svd_white_nostand',
             "opt_strategy": {
                 "name": 'tf_sonly', # ['tf_sonly', 'tf_ronly', 'tf_srmixed', 'tf_wonly']
                 "r_loss_type": 'diff',  # ['norm, 'diff']
                 "r_loss_log_scale": False,
-                "learning_rate": ('tri2', 0.001, 1e-6, 250, 10), # ('steps', 0.001, 10, 1e-6, 100), ('const', 0.001), ('tri2', 0.001, 1e-6, 250)
-                "batch_size": 1,
-                "epochs": 2000,
+                "learning_rate": ('sgdr', 0.001, 1e-6, 500, 10), # ('steps', 0.001, 10, 1e-6, 100), ('const', 0.001), ('tri2', 0.001, 1e-6, 250)
+                "batch_size": 16,
+                "epochs": 2000
             },
             # "finetune_from": 'saved_models/PODANN/PODANN_tf_srmixed_diff_svd_white_nostand_Lay[40, 40]_Emb6.40_LRsteps0.001/',
             "finetune_from": None,
             "augmented": False,
             "use_bias": False,
+            "use_dropout": None
         },
-        "dataset_path": 'datasets_two_forces_dense_extended/',
-        "models_path_root": 'saved_models/',
+        "dataset_path": 'datasets_rubber_hyperelastic_cantilever_big_range/',
+        "models_path_root": 'saved_models_cantilever_big_range/',
         "project_parameters_file":'ProjectParameters_tf.json'
    },
-   {
-        "sim_type": 'structural',
-        "name": None,
-        "architecture": {
-            "name": 'PODANN', # ['POD','Quad','PODANN]
-            "q_inf_size": 6,
-            "q_sup_size": 20,
-            "hidden_layers": [40,40],
-            "prepost_process": 'svd_white_nostand',
-            "opt_strategy": {
-                "name": 'tf_ronly', # ['tf_sonly', 'tf_ronly', 'tf_srmixed', 'tf_wonly']
-                "r_loss_type": 'diff',  # ['norm, 'diff']
-                "r_loss_log_scale": False,
-                "learning_rate": ('tri2', 0.001, 1e-6, 250, 10), # ('steps', 0.001, 10, 1e-6, 100), ('const', 0.001), ('tri2', 0.001, 1e-6, 250)
-                "batch_size": 1,
-                "epochs": 2000,
-            },
-            # "finetune_from": 'saved_models/PODANN/PODANN_tf_srmixed_diff_svd_white_nostand_Lay[40, 40]_Emb6.40_LRsteps0.001/',
-            "finetune_from": None,
-            "augmented": True,
-            "use_bias": False,
-        },
-        "dataset_path": 'datasets_two_forces_dense_extended/',
-        "models_path_root": 'saved_models/',
-        "project_parameters_file":'ProjectParameters_tf.json'
-   },
+#    {
+#         "sim_type": 'structural',
+#         "name": None,
+#         "architecture": {
+#             "name": 'PODANN', # ['POD','Quad','PODANN]
+#             "q_inf_size": 20,
+#             "q_sup_size": 60,
+#             "hidden_layers": [200,200],
+#             "prepost_process": 'svd_white_nostand',
+#             "opt_strategy": {
+#                 "name": 'tf_sonly', # ['tf_sonly', 'tf_ronly', 'tf_srmixed', 'tf_wonly']
+#                 "r_loss_type": 'diff',  # ['norm, 'diff']
+#                 "r_loss_log_scale": False,
+#                 "learning_rate": ('sgdr', 0.001, 1e-6, 500, 10), # ('steps', 0.001, 10, 1e-6, 100), ('const', 0.001), ('tri2', 0.001, 1e-6, 250)
+#                 "batch_size": 16,
+#                 "epochs": 2000
+#             },
+#             # "finetune_from": 'saved_models/PODANN/PODANN_tf_srmixed_diff_svd_white_nostand_Lay[40, 40]_Emb6.40_LRsteps0.001/',
+#             "finetune_from": None,
+#             "augmented": False,
+#             "use_bias": False,
+#         },
+#         "dataset_path": 'datasets_rubber_hyperelastic_cantilever_big_range/',
+#         "models_path_root": 'saved_models_cantilever_big_range/',
+#         "project_parameters_file":'ProjectParameters_tf.json'
+#    },
+#    {
+#         "sim_type": 'structural',
+#         "name": 'saved_models/PODANN/test_batchNorm_sLoss',
+#         "architecture": {
+#             "name": 'PODANN', # ['POD','Quad','PODANN]
+#             "q_inf_size": 6,
+#             "q_sup_size": 20,
+#             "hidden_layers": [40,40],
+#             "prepost_process": 'svd_white_nostand',
+#             "opt_strategy": {
+#                 "name": 'tf_sonly', # ['tf_sonly', 'tf_ronly', 'tf_srmixed', 'tf_wonly']
+#                 "r_loss_type": 'diff',  # ['norm, 'diff']
+#                 "r_loss_log_scale": False,
+#                 "learning_rate": ('sgdr', 0.001, 1e-6, 500, 10), # ('steps', 0.001, 10, 1e-6, 100), ('const', 0.001), ('tri2', 0.001, 1e-6, 250)
+#                 "batch_size": 16,
+#                 "epochs": 2000
+#             },
+#             # "finetune_from": 'saved_models/PODANN/PODANN_tf_srmixed_diff_svd_white_nostand_Lay[40, 40]_Emb6.40_LRsteps0.001/',
+#             "finetune_from": None,
+#             "augmented": False,
+#             "use_bias": True,
+#         },
+#         "dataset_path": 'datasets_two_forces_dense_extended/',
+#         "models_path_root": 'saved_models/',
+#         "project_parameters_file":'ProjectParameters_tf.json'
+#    }
    ]
 
     working_path=argv[1]+"/"

@@ -51,7 +51,7 @@ if __name__ == "__main__":
     arch_factory.configure_prepost_processor(prepost_processor, S_FOM_orig, crop_mat_tf, crop_mat_scp)
 
     S_out=prepost_processor.preprocess_nn_output_data(S_FOM_orig)
-    S_in=prepost_processor.preprocess_input_data(S_FOM_orig)
+    S_in, _=prepost_processor.preprocess_input_data(S_FOM_orig)
 
     plt.boxplot(np.concatenate([S_in,S_out], axis=1))
     plt.show()

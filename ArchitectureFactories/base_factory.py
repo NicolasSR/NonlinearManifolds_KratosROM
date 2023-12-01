@@ -36,55 +36,78 @@ class Base_Architecture_Factory(abc.ABC):
     def set_actual_model_path(self, model_path):
         self.model_path = model_path
 
-    def get_training_data(self, prepost_processor, dataset_path):
+    def get_orig_fom_snapshots(self, dataset_path):
+        S_FOM_orig=np.load(self.working_path+dataset_path+'FOM.npy')
+        return S_FOM_orig
+
+    # def get_training_data(self, prepost_processor, dataset_path):
         
-        target_aux=None
-        val_target_aux=None
+    #     target_aux=None
+    #     val_target_aux=None
 
-        if self.arch_config["augmented"]:
-            S_train_raw=np.load(self.working_path+dataset_path+'S_augm_train.npy')
-            # S_target_train=np.load(self.working_path+dataset_path+'S_repeat_train.npy')
-            S_target_train=S_train_raw.copy()
-            if self.arch_config["opt_strategy"]["r_loss_type"]=='norm':
-                # target_aux=np.load(self.working_path+dataset_path+'F_repeat_train.npy')
-                print("Can't do RNorm loss with augmented")
-                exit()
-            elif self.arch_config["opt_strategy"]["r_loss_type"]=='diff':
-                # target_aux=np.load(self.working_path+dataset_path+'R_repeat_train.npy')
-                target_aux=np.load(self.working_path+dataset_path+'R_augm_train.npy')
-            else:
-                print('Invalid R loss type at data import')
-        else:
-            S_train_raw=np.load(self.working_path+dataset_path+'S_train.npy')
-            S_target_train=S_train_raw.copy()
-            if self.arch_config["opt_strategy"]["r_loss_type"]=='norm':
-                target_aux=np.load(self.working_path+dataset_path+'F_train.npy')
-            elif self.arch_config["opt_strategy"]["r_loss_type"]=='diff':
-                target_aux=np.load(self.working_path+dataset_path+'R_train.npy')
-            else:
-                print('Invalid R loss type at data import')
+    #     print(dataset_path)
 
-        input_data = prepost_processor.preprocess_input_data(S_train_raw)
-        target_data=(S_target_train, target_aux)
+    #     if self.arch_config["augmented"]:
+    #         S_train_raw=np.load(self.working_path+dataset_path+'S_augm_train.npy')
+    #         # S_target_train=np.load(self.working_path+dataset_path+'S_repeat_train.npy')
+    #         S_target_train=S_train_raw.copy()
+    #         if self.arch_config["opt_strategy"]["r_loss_type"]=='norm':
+    #             # target_aux=np.load(self.working_path+dataset_path+'F_repeat_train.npy')
+    #             print("Can't do RNorm loss with augmented")
+    #             exit()
+    #         elif self.arch_config["opt_strategy"]["r_loss_type"]=='diff':
+    #             # target_aux=np.load(self.working_path+dataset_path+'R_repeat_train.npy')
+    #             target_aux=np.load(self.working_path+dataset_path+'R_augm_train.npy')
+    #         else:
+    #             print('Invalid R loss type at data import')
+    #     else:
+    #         S_train_raw=np.load(self.working_path+dataset_path+'S_train.npy')
+    #         # S_train_raw_2=np.load(self.working_path+dataset_path+'S_train_extra.npy')
+    #         # S_train_raw=np.concatenate([S_train_raw_1,S_train_raw_2],axis=0)
+    #         S_target_train=S_train_raw.copy()
+    #         if self.arch_config["opt_strategy"]["r_loss_type"]=='norm':
+    #             target_aux=np.load(self.working_path+dataset_path+'F_train.npy')
+    #             # target_aux_2=np.load(self.working_path+dataset_path+'F_train_extra.npy')
+    #             # target_aux=np.concatenate([target_aux_1,target_aux_2],axis=0)
+    #         elif self.arch_config["opt_strategy"]["r_loss_type"]=='diff':
+    #             target_aux=np.load(self.working_path+dataset_path+'R_train.npy')
+    #             # target_aux_2=np.load(self.working_path+dataset_path+'R_train_extra.npy')
+    #             # target_aux=np.concatenate([target_aux_1,target_aux_2],axis=0)
+    #         else:
+    #             print('Invalid R loss type at data import')
 
-        S_val_raw=np.load(self.working_path+dataset_path+'S_val.npy')
+    #     input_data = prepost_processor.preprocess_input_data(S_train_raw)
+    #     target_data=(S_target_train, target_aux)
 
-        if self.arch_config["opt_strategy"]["r_loss_type"]=='norm':
-            val_target_aux=np.load(self.working_path+dataset_path+'F_val.npy')
-        elif self.arch_config["opt_strategy"]["r_loss_type"]=='diff':
-            val_target_aux=np.load(self.working_path+dataset_path+'R_val.npy')
-        else:
-            print('Invalid R loss type at data import')
+    #     if self.arch_config["augmented"]:
+    #         S_val_raw=np.load(self.working_path+dataset_path+'S_augm_val.npy')
+    #         S_target_val=S_val_raw.copy()
+    #         if self.arch_config["opt_strategy"]["r_loss_type"]=='norm':
+    #             print("Can't do RNorm loss with augmented")
+    #             exit()
+    #         elif self.arch_config["opt_strategy"]["r_loss_type"]=='diff':
+    #             val_target_aux=np.load(self.working_path+dataset_path+'R_augm_val.npy')
+    #         else:
+    #             print('Invalid R loss type at data import')
+    #     else:
+    #         S_val_raw=np.load(self.working_path+dataset_path+'S_val.npy')
+    #         S_target_val=S_val_raw.copy()
+    #         if self.arch_config["opt_strategy"]["r_loss_type"]=='norm':
+    #             val_target_aux=np.load(self.working_path+dataset_path+'F_val.npy')
+    #         elif self.arch_config["opt_strategy"]["r_loss_type"]=='diff':
+    #             val_target_aux=np.load(self.working_path+dataset_path+'R_val.npy')
+    #         else:
+    #             print('Invalid R loss type at data import')
 
-        val_input=prepost_processor.preprocess_input_data(S_val_raw)
-        val_target=(S_val_raw, val_target_aux)
+    #     val_input=prepost_processor.preprocess_input_data(S_val_raw)
+    #     val_target=(S_target_val, val_target_aux)
 
-        return input_data, target_data, val_input, val_target
+    #     return input_data, target_data, val_input, val_target
 
     def get_custom_LR_scheduler_TF(self):
         opt_strategy_config=self.arch_config["opt_strategy"]
         
-        if opt_strategy_config["name"]=='tf_srmixed':
+        if opt_strategy_config["name"]=='tf_srmixed' or opt_strategy_config["name"]=='tf_srmixed_cropped':
             lr_schedule_func = get_lr_schedule_func(opt_strategy_config["learning_rate"])
             wx_schedule_func = get_lr_schedule_func(opt_strategy_config["wx"])
             wr_schedule_func = get_lr_schedule_func(opt_strategy_config["wr"])

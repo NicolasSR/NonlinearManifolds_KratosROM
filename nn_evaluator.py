@@ -7,6 +7,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import json
 import numpy as np
 
+import matplotlib
 import matplotlib.pyplot as plt
 import pandas as pd
 
@@ -23,14 +24,14 @@ from ArchitectureFactories.PODANN_factory import PODANN_Architecture_Factory
 from ArchitectureFactories.Quad_factory import Quad_Architecture_Factory
 from ArchitectureFactories.POD_factory import POD_Architecture_Factory
 
-from Utils.custom_metrics import mean_relative_l2_error, relative_forbenius_error, mean_l2_error, forbenius_error
+from Utils.custom_metrics import mean_relative_l2_error, relative_forbenius_error, mean_l2_error, forbenius_error, l2_error_list
 from Utils.matrix_to_gid_output import output_GID_from_matrix
 
 tf.keras.backend.set_floatx('float64')
 
 class NN_Evaluator():
 
-    def __init__(self, working_path, model_path, GID_FOM_filename, best, test_validation=False):
+    def __init__(self, working_path, model_path, GID_FOM_filename, best, test_validation=False, test_small=False):
         self.working_path=working_path
         self.model_path=working_path+model_path
         self.results_path=self.model_path+'reconstruction_evaluation_results/'
@@ -60,10 +61,15 @@ class NN_Evaluator():
         self.dataset_path=working_path+self.train_config['dataset_path']
 
         self.test_validation=test_validation
+        self.test_small=test_small
         if self.test_validation:
             self.name_complement='_test_validation_'
+        elif self.test_small:
+            self.name_complement='_test_small_'
         else:
             self.name_complement = ''
+            
+
 
     def get_last_best_filename(self, model_weights_path, prefix):
         matching_files = [file for file in os.listdir(model_weights_path) if file.startswith(prefix)]
@@ -72,14 +78,20 @@ class NN_Evaluator():
 
     def prepare_evaluation_data(self, ):
 
-        if self.test_validation==False:
+        if self.test_validation==False and self.test_small==False:
+            # S_test=np.load(self.dataset_path+'S_large_dataset.npy').T
             S_test=np.load(self.dataset_path+'S_test.npy')
             R_test=np.load(self.dataset_path+'R_test.npy')
+            # F_test=np.load(self.dataset_path+'F_large_dataset.npy')
             F_test=np.load(self.dataset_path+'F_test.npy')
-        else:
+        elif self.test_validation:
             S_test=np.load(self.dataset_path+'S_val.npy')
             R_test=np.load(self.dataset_path+'R_val.npy')
             F_test=np.load(self.dataset_path+'F_val.npy')
+        elif self.test_small:
+            S_test=np.load(self.dataset_path+'S_test_small.npy')
+            R_test=np.load(self.dataset_path+'R_test_small.npy')
+            F_test=np.load(self.dataset_path+'F_test_small.npy')
 
         return S_test, R_test, F_test
 
@@ -101,19 +113,15 @@ class NN_Evaluator():
         # else:
         return StructuralMechanics_KratosSimulator
     
-    def get_orig_fom_snapshots(self):
-        S_FOM_orig=np.load(self.working_path+self.train_config['dataset_path']+'FOM.npy')
-        return S_FOM_orig
-    
     def get_pred_snapshots_matrix(self, x_true):
         file_name = 's_pred_matrix'+self.best_name_part+self.name_complement+'.npy'
         try:
             x_pred = np.load(self.results_path+file_name)
         except IOError:
             print("No precomputed S_pred matrix. Computing new one")
-            x_true_norm = self.prepost_processor.preprocess_input_data(x_true)
+            x_true_norm, aux_norm_data = self.prepost_processor.preprocess_input_data(x_true)
             x_pred_norm = self.network(x_true_norm).numpy()
-            x_pred = self.prepost_processor.postprocess_output_data(x_pred_norm, x_true_norm)
+            x_pred = self.prepost_processor.postprocess_output_data(x_pred_norm, (x_true_norm,aux_norm_data))
             np.save(self.results_path+file_name, x_pred)
         return x_pred
     
@@ -136,6 +144,36 @@ class NN_Evaluator():
             r_force_pred = self.kratos_simulation.get_r_forces_array(x_pred, F_test)
             np.save(self.results_path+file_name, r_force_pred)
         return r_force_pred
+    
+    def display_failure_region(self, R_test, R_noForce_pred, tolerance, F):
+        g_list = l2_error_list(R_test, R_noForce_pred) - tolerance
+        sc=plt.scatter(F[:,0,0],F[:,20,1], c=g_list, s=4, cmap='jet')
+        # sc=plt.scatter(F[:,0,0],F[:,20,1], c=g_list, s=4, cmap='jet', norm=matplotlib.colors.LogNorm())
+        plt.colorbar(sc)
+        plt.show()
+        F_parsed=np.concatenate((np.expand_dims(F[:,0,0],axis=1),np.expand_dims(F[:,20,1],axis=1)), axis=1)
+        return g_list
+    
+    def SAIS_recursion(self, F, g_list):
+        F=np.concatenate((np.expand_dims(F[:,0,0],axis=1),np.expand_dims(F[:,20,1],axis=1)), axis=1)
+        sorted_indices = g_list.argsort()[::-1]
+        # print(sorted_indices)
+        # print(g_list[sorted_indices])
+        F_sorted = F[sorted_indices]
+        N_eta=int(np.where(g_list>0)[0].shape[0])
+        N_p=int(0.2*F.shape[0])
+        print('N_eta: ', N_eta, '   N_p: ', N_p)
+
+        D_np=F_sorted[:N_p,:]
+        mu_opt=np.mean(D_np, axis=0)
+        covar_mat=np.cov(D_np.T)
+        print('Mean: ', mu_opt)
+        print('Covariance: ', covar_mat)
+
+        # candidate_params = np.random.multivariate_normal(mu_opt, covar_mat, size=1000)
+        # plt.scatter(candidate_params[:,0],candidate_params[:,1])
+        # plt.show()
+            
     
     def display_snapshot_relative_errors(self, x_true, x_pred):
         l2_error=mean_relative_l2_error(x_true,x_pred)
@@ -171,9 +209,9 @@ class NN_Evaluator():
             x_FOM = np.load(self.dataset_path+'FOM/'+self.GID_FOM_filename)
             F_FOM = np.load(self.dataset_path+'FOM/'+'POINTLOADS'+self.GID_FOM_filename[3:])
 
-            x_true_norm = self.prepost_processor.preprocess_input_data(x_FOM)
+            x_true_norm, aux_norm_data = self.prepost_processor.preprocess_input_data(x_FOM)
             x_pred_norm = self.network(x_true_norm).numpy()
-            x_pred = self.prepost_processor.postprocess_output_data(x_pred_norm, x_true_norm)
+            x_pred = self.prepost_processor.postprocess_output_data(x_pred_norm, (x_true_norm,aux_norm_data))
             np.save(output_filename+'.npy', x_pred)
             reactions = self.kratos_simulation.get_r_forces_withDirich_array(x_pred, F_FOM)
 
@@ -192,7 +230,7 @@ class NN_Evaluator():
         # Select the type of preprocessing (normalisation)
         self.prepost_processor=arch_factory.prepost_processor_selector(self.working_path, self.train_config["dataset_path"])
 
-        S_FOM_orig = self.get_orig_fom_snapshots()
+        S_FOM_orig = arch_factory.get_orig_fom_snapshots(self.train_config['dataset_path'])
         arch_factory.configure_prepost_processor(self.prepost_processor, S_FOM_orig, crop_mat_tf, crop_mat_scp)
 
         print('======= Instantiating TF Model =======')
@@ -209,6 +247,28 @@ class NN_Evaluator():
         S_pred = self.get_pred_snapshots_matrix(S_test)
         R_noForce_pred = self.get_pred_r_noForce_matrix(S_pred)
         R_force_pred = self.get_pred_r_force_matrix(S_pred, F_test)
+
+        # g_list = self.display_failure_region(0, R_force_pred, 1000, F_test)
+        # sorted_indices = g_list.argsort()[::-1]
+        # F_test_sorted = F_test[sorted_indices]
+        # S_test_sorted = S_test[sorted_indices]
+
+        # F_extra_samples = F_test_sorted[:500]
+        # S_extra_samples = S_test_sorted[:500]
+        # R_noForce_pred = self.get_pred_r_noForce_matrix(S_extra_samples)
+
+        # print('R: ', R_noForce_pred.shape)
+        # print(R_noForce_pred)
+        # print('S: ', S_extra_samples.shape)
+        # print(S_extra_samples)
+        # print('F: ', F_extra_samples.shape)
+        # print(F_extra_samples)
+
+        # np.save('S_new_extra_samples.npy', S_extra_samples)
+        # np.save('F_new_extra_samples.npy', F_extra_samples)
+
+
+        # self.SAIS_recursion(F_test, g_list)
 
         self.display_snapshot_relative_errors(S_test, S_pred)
         self.display_r_diff_relative_errors(R_test, R_noForce_pred)

@@ -5,33 +5,34 @@ import abc
 
 import matplotlib.pyplot as plt
 
+from PrePostProcessors.base_prepost_processor import Base_PrePostProcessor
 
-class Base_Quad_PrePostProcessor(abc.ABC):
+# class Base_Quad_PrePostProcessor(abc.ABC):
 
-    def __init__(self):
-        super().__init__()
+#     def __init__(self):
+#         super().__init__()
 
-    @abc.abstractmethod
-    def configure_processor(self, S, crop_mat_tf, crop_mat_scp):
-        """ Define in subclass"""
+#     @abc.abstractmethod
+#     def configure_processor(self, S, crop_mat_tf, crop_mat_scp):
+#         """ Define in subclass"""
     
-    @abc.abstractmethod
-    def preprocess_input_data(self, snapshot):
-        """ Define in subclass"""
+#     @abc.abstractmethod
+#     def preprocess_input_data(self, snapshot):
+#         """ Define in subclass"""
 
-    @abc.abstractmethod
-    def preprocess_input_data_tf(self, snapshot_tensor):
-        """ Define in subclass"""
+#     @abc.abstractmethod
+#     def preprocess_input_data_tf(self, snapshot_tensor):
+#         """ Define in subclass"""
 
-    @abc.abstractmethod
-    def postprocess_output_data(self, pred_snapshot, _):
-        """ Define in subclass"""
+#     @abc.abstractmethod
+#     def postprocess_output_data(self, pred_snapshot, _):
+#         """ Define in subclass"""
 
-    @abc.abstractmethod
-    def postprocess_output_data_tf(self, pred_snapshot_tensor, _):
-        """ Define in subclass"""
+#     @abc.abstractmethod
+#     def postprocess_output_data_tf(self, pred_snapshot_tensor, _):
+#         """ Define in subclass"""
 
-class ScaleGlobal_TF_Quad_PrePostProcessor(Base_Quad_PrePostProcessor):
+class ScaleGlobal_TF_Quad_PrePostProcessor(Base_PrePostProcessor):
     def __init__(self, working_path, dataset_path):
         super().__init__()
         self.scale_factor = None
@@ -92,7 +93,7 @@ class ScaleGlobal_TF_Quad_PrePostProcessor(Base_Quad_PrePostProcessor):
         self.phi_cropped = self.crop_mat_scp.T@phi
         self.H_scaled_cropped = self.crop_mat_scp.T@H_scaled
 
-        S_input = self.preprocess_input_data(S)
+        S_input, _ = self.preprocess_input_data(S)
         S_recons_lin = np.matmul(self.phi_cropped,np.matmul(self.phi_cropped.T,S_input.T))
         S_recons_quad = np.matmul(self.H_scaled_cropped,q_quad_scaled.T)
         S_recons_quad_proj= np.matmul(self.phi_cropped,np.matmul(self.phi_cropped.T,S_recons_quad))
@@ -100,7 +101,8 @@ class ScaleGlobal_TF_Quad_PrePostProcessor(Base_Quad_PrePostProcessor):
         S_recons_denorm = self.postprocess_output_data(S_recons, None)
         print('Reconstruction error SVD (Frob): ', np.linalg.norm(S_recons_denorm-S)/np.linalg.norm(S))
         err_aux=np.linalg.norm(S-S_recons_denorm, ord=2, axis=1)/np.linalg.norm(S, ord=2, axis=1)
-        print('Reconstruction error SVD (Mean L2): ', np.sum(err_aux)/S.shape[0])
+        # print('Reconstruction error SVD (Mean L2): ', np.sum(err_aux)/S.shape[0])
+        print('Reconstruction error SVD (Mean L2): ', np.exp(np.sum(np.log(err_aux))/S.shape[0]))
 
     def get_phi_and_H(self):
         return self.phi_cropped, self.H_scaled_cropped
@@ -110,12 +112,12 @@ class ScaleGlobal_TF_Quad_PrePostProcessor(Base_Quad_PrePostProcessor):
         print(self.crop_mat_scp.shape)
         output_data=(self.crop_mat_scp.T@output_data.T).T
         output_data*=self.scale_factor
-        return output_data
+        return output_data, None
     
     def preprocess_input_data_tf(self,snapshot_tensor):
         output_tensor = tf.transpose(tf.sparse.sparse_dense_matmul(self.crop_mat_tf, snapshot_tensor, adjoint_a=True, adjoint_b=True, name=None))
         output_tensor = output_tensor*self.scale_factor_tf
-        return output_tensor
+        return output_tensor, None
 
     def postprocess_output_data(self, pred_snapshot,_):
         output_data=pred_snapshot.copy()
@@ -129,7 +131,7 @@ class ScaleGlobal_TF_Quad_PrePostProcessor(Base_Quad_PrePostProcessor):
         return output_tensor
     
 
-class Identity_Quad_PrePostProcessor(Base_Quad_PrePostProcessor):
+class Identity_Quad_PrePostProcessor(Base_PrePostProcessor):
     def __init__(self, working_path, dataset_path):
         super().__init__()
         self.phi=None
@@ -175,7 +177,7 @@ class Identity_Quad_PrePostProcessor(Base_Quad_PrePostProcessor):
             print(self.dataset_path+'Quad/H_matrix_n'+str(q_size)+'.npy')
             np.save(self.dataset_path+'Quad/H_matrix_n'+str(q_size)+'.npy',self.H_mat)
 
-        S_input = self.preprocess_input_data(S)
+        S_input, _ = self.preprocess_input_data(S)
         S_recons_lin = np.matmul(self.phi,np.matmul(self.phi.T,S_input.T))
         S_recons_quad = np.matmul(self.H_mat,q_quad.T)
         S_recons_quad_proj= np.matmul(self.phi,np.matmul(self.phi.T,S_recons_quad))
@@ -189,10 +191,10 @@ class Identity_Quad_PrePostProcessor(Base_Quad_PrePostProcessor):
         return self.phi, self.H_mat
 
     def preprocess_input_data(self, snapshot):
-        return snapshot
+        return snapshot, None
     
     def preprocess_input_data_tf(self,snapshot_tensor):
-        return snapshot_tensor
+        return snapshot_tensor, None
 
     def postprocess_output_data(self, pred_snapshot,_):
         return pred_snapshot

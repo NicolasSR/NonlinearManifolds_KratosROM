@@ -78,10 +78,6 @@ class Scipy_Solver():
         # else:
         return StructuralMechanics_KratosSimulator
     
-    def get_orig_fom_snapshots(self):
-        S_FOM_orig=np.load(self.working_path+self.train_config['dataset_path']+'FOM.npy')
-        return S_FOM_orig
-    
     def prepare_reference_data(self):
         S_true=np.load(self.dataset_path+'FOM/FOM_equalForces_30steps.npy')
         F_true=np.load(self.dataset_path+'FOM/POINTLOADS_equalForces_30steps.npy')
@@ -89,11 +85,14 @@ class Scipy_Solver():
     
     def optimisation_routine(self, q0, f_vectors, s_true):
         f_vectors=np.expand_dims(f_vectors, axis=0)
-        snapshot_true=np.expand_dims(s_true, axis=0)
+        # snapshot_true=np.expand_dims(s_true, axis=0)
+        snapshot_true=s_true
 
         print()
         
+        print(snapshot_true.shape)
         q_goal=self.encode(snapshot_true)
+        print(q_goal.shape)
         S_goal_pred=self.decode(q_goal)
 
         r_vector_goal = self.kratos_simulation.get_r_forces_(S_goal_pred, f_vectors)[0]
@@ -116,8 +115,8 @@ class Scipy_Solver():
             return s_norm
         
         # minimizer_kwargs = {"method":"L-BFGS-B", "options":{"maxiter":2}}
-        # q_optim = scipy.optimize.basinhopping(opt_function, q0, niter=2, minimizer_kwargs=minimizer_kwargs)
-        optim_result = scipy.optimize.basinhopping(opt_function, q0)
+        # optim_result = scipy.optimize.basinhopping(opt_function, q0, niter=2, minimizer_kwargs=minimizer_kwargs)
+        optim_result = scipy.optimize.basinhopping(opt_function, q0, stepsize=0.1)
 
         print(optim_result)
 
@@ -126,7 +125,7 @@ class Scipy_Solver():
         else:
             q_final=optim_result.x
         
-        snapshot_final = self.decode(q_final).numpy()
+        snapshot_final = self.decode(q_final)
         snapshot_rel_error_to_FOM = np.linalg.norm(snapshot_final-snapshot_true)/np.linalg.norm(snapshot_true)
         
         r_vector_final = self.kratos_simulation.get_r_forces_(snapshot_final, f_vectors)
@@ -154,7 +153,7 @@ class Scipy_Solver():
         # Select the type of preprocessing (normalisation)
         prepost_processor=arch_factory.prepost_processor_selector(self.working_path, self.train_config["dataset_path"])
 
-        S_FOM_orig = self.get_orig_fom_snapshots()
+        S_FOM_orig = arch_factory.get_orig_fom_snapshots(self.train_config['dataset_path'])
         arch_factory.configure_prepost_processor(prepost_processor, S_FOM_orig, crop_mat_tf, crop_mat_scp)
 
         print('======= Instantiating TF Model =======')
@@ -165,7 +164,7 @@ class Scipy_Solver():
 
         print('======= Defining encoder and decoder routines =======')
         self.encode=arch_factory.NMROM_encoder(prepost_processor, enc_network)
-        self.decode=arch_factory.NMROM_encoder(prepost_processor, dec_network)
+        self.decode=arch_factory.NMROM_decoder(prepost_processor, dec_network)
 
         print('======= Preparing reference data =======')
         S_true, F_true = self.prepare_reference_data()

@@ -3,7 +3,7 @@ import tensorflow as tf
 
 from ArchitectureFactories.base_factory import Base_Architecture_Factory
 
-from Optimization_Strategies.no_tf_train_strategy import NoTFTrain_Strategy_KerasModel
+from Optimization_Strategies.no_tf_train_strategy_batches import NoTFTrain_Strategy_KerasModel
 
 from PrePostProcessors.POD_prepost_processors import Identity_POD_PrePostProcessor
 
@@ -57,7 +57,7 @@ class POD_Architecture_Factory(Base_Architecture_Factory):
         return Identity_POD_PrePostProcessor(working_path, dataset_path)
         
     def configure_prepost_processor(self, prepost_processor, S_flat_orig, crop_mat_tf, crop_mat_scp):
-        prepost_processor.configure_processor(S_flat_orig, self.arch_config["q_size"])
+        prepost_processor.configure_processor(S_flat_orig, self.arch_config["q_size"], crop_mat_tf, crop_mat_scp)
         return
     
     def get_custom_LR_scheduler(self):
@@ -93,13 +93,13 @@ class POD_Architecture_Factory(Base_Architecture_Factory):
 
     def NMROM_encoder(self, prepost_processor, enc_network):
         def encode_function(s):
-            s_norm = prepost_processor.preprocess_input_data(np.expand_dims(s, axis=0))
+            s_norm, _ = prepost_processor.preprocess_input_data(np.expand_dims(s, axis=0))
             q = enc_network(s_norm).numpy()
-            return q
+            return q, None
         return encode_function
     
     def NMROM_decoder(self, prepost_processor, dec_network):
-        def decode_function(q):
+        def decode_function(q, aux_norm_data):
             s_pred_norm = dec_network(q).numpy()
             s_pred = prepost_processor.postprocess_output_data(s_pred_norm, None)
             return s_pred

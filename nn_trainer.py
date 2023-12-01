@@ -16,6 +16,7 @@ import logging
 tf.get_logger().setLevel(logging.ERROR)
 
 from Kratos_Simulators.structural_mechanics_kratos_simulator import StructuralMechanics_KratosSimulator
+from Kratos_Simulators.fluid_dynamics_kratos_simulator import FluidDynamics_KratosSimulator
 
 from ArchitectureFactories.PODANN_factory import PODANN_Architecture_Factory
 from ArchitectureFactories.Quad_factory import Quad_Architecture_Factory
@@ -38,7 +39,7 @@ class NN_Trainer():
             self.model_path+=arch_folder_name+'/'
             self.model_path+=model_name
         else:
-            self.model_path=self.train_config["name"]
+            self.model_path=self.working_path+self.train_config["models_path_root"]+self.train_config["name"]
 
         while os.path.isdir(self.model_path+'/'):
             self.model_path+='_bis'
@@ -65,14 +66,11 @@ class NN_Trainer():
             return None
         
     def kratos_simulator_selector(self, sim_type):
-        # if 'fluid' in sim_type:
-        #     return KratosSimulator_Fluid
-        # else:
+        if sim_type=="structural":
+            return StructuralMechanics_KratosSimulator
+        elif sim_type=='fluid':
+            return FluidDynamics_KratosSimulator
         return StructuralMechanics_KratosSimulator
-        
-    def get_orig_fom_snapshots(self):
-        S_FOM_orig=np.load(self.working_path+self.train_config['dataset_path']+'FOM.npy')
-        return S_FOM_orig
     
     def execute_training(self):
 
@@ -90,7 +88,7 @@ class NN_Trainer():
         # Select the type of preprocessimg (normalisation)
         prepost_processor=arch_factory.prepost_processor_selector(self.working_path, self.train_config["dataset_path"])
 
-        S_FOM_orig = self.get_orig_fom_snapshots()
+        S_FOM_orig = arch_factory.get_orig_fom_snapshots(self.train_config['dataset_path'])
         arch_factory.configure_prepost_processor(prepost_processor, S_FOM_orig, crop_mat_tf, crop_mat_scp)
         
         # nn_output_data = prepost_processor.preprocess_nn_output_data(S_FOM_orig)
@@ -106,7 +104,7 @@ class NN_Trainer():
 
         # Get training data
         print('======= Loading training data =======')
-        input_data, target_data, val_input, val_target = arch_factory.get_training_data(prepost_processor, self.train_config["dataset_path"])
+        input_data, target_data, val_input, val_target = prepost_processor.get_training_data(self.train_config["architecture"])
         print('Shape input_data:', input_data.shape)
         for i in range(len(target_data)):
             print('Shape target_data [', i, ']: ', target_data[i].shape)

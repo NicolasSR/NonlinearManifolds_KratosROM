@@ -18,6 +18,7 @@ import logging
 tf.get_logger().setLevel(logging.ERROR)
 
 from Kratos_Simulators.structural_mechanics_kratos_simulator import StructuralMechanics_KratosSimulator
+from Kratos_Simulators.fluid_dynamics_kratos_simulator import FluidDynamics_KratosSimulator
 
 from ArchitectureFactories.PODANN_factory import PODANN_Architecture_Factory
 from ArchitectureFactories.Quad_factory import Quad_Architecture_Factory
@@ -68,14 +69,11 @@ class TF_Gradient_Tester():
             return None
         
     def kratos_simulator_selector(self, sim_type):
-        # if 'fluid' in sim_type:
-        #     return KratosSimulator_Fluid
-        # else:
-        return StructuralMechanics_KratosSimulator
-    
-    def get_orig_fom_snapshots(self):
-        S_FOM_orig=np.load(self.working_path+self.train_config['dataset_path']+'FOM.npy')
-        return S_FOM_orig
+        if sim_type=="structural":
+            return StructuralMechanics_KratosSimulator
+        elif sim_type=='fluid':
+            return FluidDynamics_KratosSimulator
+        return None
 
     def execute_test(self):
 
@@ -90,7 +88,7 @@ class TF_Gradient_Tester():
         # Select the type of preprocessing (normalisation)
         self.prepost_processor=arch_factory.prepost_processor_selector(self.working_path, self.train_config["dataset_path"])
 
-        S_FOM_orig = self.get_orig_fom_snapshots()
+        S_FOM_orig = arch_factory.get_orig_fom_snapshots(self.train_config['dataset_path'])
         arch_factory.configure_prepost_processor(self.prepost_processor, S_FOM_orig, crop_mat_tf, crop_mat_scp)
 
         print('======= Instantiating TF Model =======')
@@ -100,11 +98,12 @@ class TF_Gradient_Tester():
         self.network.load_weights(self.model_weights_path+self.model_weights_filename)
 
 
-        input_data, target_data, val_input, val_target = arch_factory.get_training_data(self.prepost_processor, self.train_config["dataset_path"])
+        input_data, target_data, val_input, val_target = self.prepost_processor.get_training_data(self.train_config["architecture"])
 
         # S_test, R_test, F_test = self.prepare_evaluation_data()
         # print('Shape S_test: ', S_test.shape)
         # print('Shape R_test: ', R_test.shape)
         # print('Shape F_test: ', F_test.shape)
 
-        self.network.test_gradients((input_data, target_data), crop_mat_tf, crop_mat_scp)
+        # self.network.test_gradients((input_data, target_data), crop_mat_tf, crop_mat_scp)
+        self.network.test_gradients_jacobian((input_data, target_data), crop_mat_tf, crop_mat_scp)

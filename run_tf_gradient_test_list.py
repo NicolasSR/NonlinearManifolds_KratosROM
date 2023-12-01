@@ -10,7 +10,8 @@ def test_gradients(working_path, model_path):
 if __name__ == "__main__":
     paths_list=[
             # 'Quad/Quad_least_squares_identity_Emb6',
-            'PODANN/PODANN_tf_wonly_vector_diff_svd_white_nostand_Lay[40, 40]_Emb6.20_LRsteps0.001',
+            # 'PODANN/PODANN_tf_ronly_diff_svd_white_nostand_Lay[40, 40]_Emb6.20_LRtri20.001_bis',
+            'PODANN/r_loss_noFinetune',
             ]
     
     parser = argparse.ArgumentParser()
@@ -21,7 +22,7 @@ if __name__ == "__main__":
     for i, model_path in enumerate(paths_list):
         
         print('----------  Evaluating case ', i+1, ' of ', len(paths_list), '  ----------')
-        test_gradients(working_path, 'saved_models/'+model_path+'/')
+        test_gradients(working_path, 'saved_models_fluid_bdf2/'+model_path+'/')
     
     # compss_barrier()
     print('FINISHED EVALUATING')

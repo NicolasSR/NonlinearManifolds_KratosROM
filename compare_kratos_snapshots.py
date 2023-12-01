@@ -44,10 +44,10 @@ def calculate_R_norm_error(R_fom):
 def draw_x_error_abs_image(S_fom, S_rom):
     fig, (ax1) = plt.subplots(ncols=1)
     image=np.abs(S_rom-S_fom)
-    im1 = ax1.imshow(image, extent=[1,S_fom.shape[1],6.0e6,0], interpolation='none', cmap='jet')
+    im1 = ax1.imshow(image, extent=[1,S_fom.shape[1],500,0], interpolation='none', cmap='jet')
     # im1 = ax1.imshow(image, extent=[1,S_fom.shape[1],6.0e6,0], interpolation='none', vmin=0, vmax=0.004, cmap='jet')
     # im1 = ax1.imshow(image, extent=[1,S_fom.shape[1],6.0e6,0], interpolation='none', vmin=-0.015, vmax=0.03, cmap='jet')
-    ax1.set_aspect(1/2e3)
+    ax1.set_aspect(2)
     cbar1 = plt.colorbar(im1)
     plt.xlabel('index')
     plt.ylabel('force')
@@ -57,10 +57,10 @@ def draw_x_error_abs_image(S_fom, S_rom):
 def draw_x_error_rel_image(S_fom, S_rom):
     fig, (ax1) = plt.subplots(ncols=1)
     image=np.abs((S_rom-S_fom))/(np.abs(S_fom)+1e-14)
-    im1 = ax1.imshow(image, extent=[1,S_fom.shape[1],6.0e6,0], interpolation='none', cmap='jet')
+    im1 = ax1.imshow(image, extent=[1,S_fom.shape[1],500,0], interpolation='none', cmap='jet')
     # im1 = ax1.imshow(image, extent=[1,S_fom.shape[1],6.0e6,0], interpolation='none', vmin=0, vmax=1, cmap='jet')
     # im1 = ax1.imshow(image, extent=[1,S_fom.shape[1],6.0e6,0], interpolation='none', vmin=-0.1, vmax=0.1, cmap='jet')
-    ax1.set_aspect(1/2e3)
+    ax1.set_aspect(2)
     cbar1 = plt.colorbar(im1)
     plt.xlabel('index')
     plt.ylabel('force')
@@ -76,20 +76,29 @@ def plot_error_over_parametric_space(S_fom, S_rom, F):
 if __name__ == "__main__":
 
     paths_list=[
-        # 'Quad/Quad_least_squares_identity_Emb6',
-        'PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[40, 40]_Emb6.20_LRtri20.001',
+        # 'POD/POD_Emb6',
+        # 'Quad/Quad_least_squares_scale_global_Emb6',
+        # 'PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[40, 40]_Emb6.20_LRsgdr0.001',
+        'saved_models_cantilever_big_range/PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[40, 40]_Emb6.20_LRsgdr0.001'
     ]
 
-    reference_snapshots_filename='datasets_two_forces_dense_extended/FOM/FOM_equalForces_3000steps.npy'
-    reference_forces_filename='datasets_two_forces_dense_extended/FOM/POINTLOADS_equalForces_3000steps.npy'
+    # reference_snapshots_filename='datasets_two_forces_dense_extended/S_mu_dataset_300.npy'
+    # reference_forces_filename='datasets_two_forces_dense_extended/F_mu_dataset_300.npy'
+    # reference_snapshots_filename='datasets_rubber_hyperelastic_cantilever/FOM/FOM_equalForces_500steps.npy'
+    # reference_forces_filename='datasets_rubber_hyperelastic_cantilever/FOM/POINTLOADS_equalForces_500steps.npy'
+
+    reference_snapshots_filename='datasets_rubber_hyperelastic_cantilever_big_range/FOM/FOM_300steps_random_seed4.npy'
+    reference_forces_filename='datasets_rubber_hyperelastic_cantilever_big_range/FOM/POINTLOADS_300steps_random_seed4.npy'
 
     for i, model_path in enumerate(paths_list):
         
         print('----------  Evaluating case ', i+1, ' of ', len(paths_list), '  ----------')
 
         # Get snapshots
-        S_rom = np.load('saved_models/'+model_path+'/NMROM_simulation_results/ROM_snaps.npy')
-        # S_rom = np.load('saved_models/'+model_path+'/reconstruction_evaluation_results/recons_FOM_equalForces_300step_bestx_.npy')
+        S_rom = np.load(model_path+'/NMROM_simulation_results_random300/ROM_snaps_converged_corrected.npy')
+        # S_rom = np.load('datasets_two_forces_dense_extended/initial_states_dataset_err100000.npy')
+        # S_rom = np.load(model_path+'/NMROM_simulation_results_3000steps_iter1/ROM_snaps_converged.npy')
+        # S_rom = np.load(model_path+'/reconstruction_evaluation_results/recons_FOM_300steps_xneg_yne_bestr_.npy')
         S_fom = np.load(reference_snapshots_filename)
 
         print('Shape S_fom:', S_fom.shape)
@@ -106,7 +115,7 @@ if __name__ == "__main__":
 
         print('======= Getting reactions matrix =======')
 
-        with open('saved_models/'+model_path+"/train_config.npy", "rb") as train_config_file:
+        with open(model_path+"/train_config.npy", "rb") as train_config_file:
             train_config = np.load(train_config_file,allow_pickle='TRUE').item()
         dataset_path=train_config['dataset_path']
 
@@ -114,9 +123,11 @@ if __name__ == "__main__":
         kratos_simulation = StructuralMechanics_KratosSimulator('', train_config)
 
         F_FOM = np.load(reference_forces_filename)
+
         r_force = kratos_simulation.get_r_forces_array(S_rom, F_FOM)
-        np.save('saved_models/'+model_path+'/NMROM_simulation_results/ROM_residuals.npy', r_force)
-        # np.save('saved_models/'+model_path+'/reconstruction_evaluation_results/reactions_recons_FOM_equalForces_300step_bestx_.npy', r_force)
+        np.save(model_path+'/NMROM_simulation_results_random300/ROM_residuals_converged_corrected.npy', r_force)
+        # np.save(model_path+'/NMROM_simulation_results_3000steps_iter1/ROM_residuals_converged.npy', r_force)
+        # np.save(model_path+'/reconstruction_evaluation_results/reactions_recons_FOM_300steps_xneg_yne_bestr_.npy', r_force)
 
         calculate_R_norm_error(r_force)
         plot_l2_errors(r_force,0.0)

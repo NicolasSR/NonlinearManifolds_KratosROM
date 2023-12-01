@@ -49,6 +49,7 @@ class NoTFTrain_Strategy_KerasModel(keras.Model):
         ## We already obtained the trained model via de PrePostProcessor, so there is nothing to train
         ## We just get the loss for one epoch and print it
 
+        # input_batch, (target_snapshot_batch,target_aux_batch,snapshot_bound_batch) = data # target_aux is the reference force or residual, depending on the settings
         input_batch, (target_snapshot_batch,target_aux_batch) = data # target_aux is the reference force or residual, depending on the settings
 
         batch_len=input_batch.shape[0]
@@ -61,9 +62,11 @@ class NoTFTrain_Strategy_KerasModel(keras.Model):
             input=tf.expand_dims(input_batch[sample_id],axis=0)
             target_snapshot=tf.expand_dims(target_snapshot_batch[sample_id],axis=0)
             target_aux=tf.expand_dims(target_aux_batch[sample_id],axis=0)
+            # snapshot_bound=tf.expand_dims(snapshot_bound_batch[sample_id],axis=0)
 
             x_pred = self(input, training=False)
-            x_pred_denorm = self.prepost_processor.postprocess_output_data_tf(x_pred, input)
+            # x_pred_denorm = self.prepost_processor.postprocess_output_data_tf(x_pred, (input,snapshot_bound))
+            x_pred_denorm = self.prepost_processor.postprocess_output_data_tf(x_pred, (input,None))
 
             err_x = target_snapshot - x_pred_denorm
             loss_x = tf.linalg.matmul(err_x,err_x,transpose_b=True)
@@ -80,6 +83,7 @@ class NoTFTrain_Strategy_KerasModel(keras.Model):
         return {"loss_x": self.loss_x_tracker.result(), "loss_r": self.loss_r_tracker.result()}
 
     def test_step(self, data):
+        # input_batch, (target_snapshot_batch,target_aux_batch,snapshot_bound_batch) = data
         input_batch, (target_snapshot_batch,target_aux_batch) = data
 
         batch_len=input_batch.shape[0]
@@ -92,9 +96,11 @@ class NoTFTrain_Strategy_KerasModel(keras.Model):
             input=tf.expand_dims(input_batch[sample_id],axis=0)
             target_snapshot=tf.expand_dims(target_snapshot_batch[sample_id],axis=0)
             target_aux=tf.expand_dims(target_aux_batch[sample_id],axis=0)
+            # snapshot_bound=tf.expand_dims(snapshot_bound_batch[sample_id],axis=0)
 
             x_pred = self(input, training=False)
-            x_pred_denorm = self.prepost_processor.postprocess_output_data_tf(x_pred, input)
+            # x_pred_denorm = self.prepost_processor.postprocess_output_data_tf(x_pred, (input,snapshot_bound))
+            x_pred_denorm = self.prepost_processor.postprocess_output_data_tf(x_pred, (input,None))
 
             err_x = target_snapshot - x_pred_denorm
             loss_x = tf.linalg.matmul(err_x,err_x,transpose_b=True)
