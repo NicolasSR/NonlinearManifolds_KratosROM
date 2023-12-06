@@ -166,10 +166,16 @@ class NMROM_Simulator():
             mu=sampler_test.random(n=300)
             mu=qmc.scale(mu, [-3000,-3000], [3000, 3000])
 
-            mu_steps=np.expand_dims(np.linalg.norm(mu, axis=1)//1,axis=1)
-            mu=np.concatenate([mu,mu_steps], axis=1)
-            return mu[[  7,   9,  13,  25,  49,  61,  67,  79,  81,  85,  97, 105, 115, 121, 133, 139, 153, 157, 169, 175, 187, 189, 193, 225, 229, 241, 249, 265, 277, 283, 297]]
+            mu_steps=np.expand_dims(np.linalg.norm(mu, axis=1)//10,axis=1)
+            #### THIS IS ONLY FOR THE CANTILEVER LARGE RANGE CASE
+            mu_steps[115,0]=np.linalg.norm(mu[115])//1
+            mu_steps[169,0]=np.linalg.norm(mu[169])//1
+            mu_steps[277,0]=np.linalg.norm(mu[277])//1
+            #### 
 
+            mu=np.concatenate([mu,mu_steps], axis=1)
+            return mu
+        
         def UpdateProjectParametersRandom(parameters, mu=None):
             """
             Customize ProjectParameters here for imposing different conditions to the simulations as needed

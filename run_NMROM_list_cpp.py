@@ -2,21 +2,30 @@ from sys import argv
 import argparse
 
 from NMROM_simulator_sparse_cpp import NMROM_Simulator
+from NMROM_simulator_sparse_cpp_pod import NMROM_POD_Simulator
 
-def simulate(working_path, sim_config, best):
-    simulation_routine=NMROM_Simulator(working_path, sim_config, best)
+def simulate(working_path, sim_config):
+    if sim_config["projection_strategy"] == 'custom':
+        simulation_routine=NMROM_Simulator(working_path, sim_config, sim_config["best"])
+    elif sim_config["projection_strategy"] == 'pod':
+        simulation_routine=NMROM_POD_Simulator(working_path, sim_config)
+    else:
+        simulation_routine=None
     simulation_routine.execute_simulation()
 
 if __name__ == "__main__":
     sim_configs_list=[
    {
-        # "model_path": 'POD/POD_Emb6',
-        # "model_path": 'saved_models/Quad/Quad_least_squares_scale_global_Emb6',
-        "model_path": 'saved_models_cantilever_big_range/PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[40, 40]_Emb6.20_LRsgdr0.001',
-        "projection_strategy": 'custom', # ['custom', 'custom_lspg']
+        "model_path": 'saved_models_cantilever_big_range/PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb14.60_LRsgdr0.001',
+        "projection_strategy": 'custom', # ['custom', 'pod']
         "parameters_selection_strategy": 'random', # ['progressive', 'random']
         "best": 'x'
-   }
+   },
+#    {
+#         "model_path": 'saved_models_cantilever_big_range/POD/POD_Emb14',
+#         "projection_strategy": 'pod', # ['custom', 'pod']
+#         "parameters_selection_strategy": 'random', # ['progressive', 'random']
+#    }
    ]
     
     parser = argparse.ArgumentParser()
@@ -29,7 +38,7 @@ if __name__ == "__main__":
     for i, sim_config in enumerate(sim_configs_list):
         
         print('----------  Evaluating case ', i+1, ' of ', len(sim_configs_list), '  ----------')
-        simulate(working_path, sim_config, sim_config["best"])
+        simulate(working_path, sim_config)
     
     # compss_barrier()
     print('FINISHED EVALUATING')

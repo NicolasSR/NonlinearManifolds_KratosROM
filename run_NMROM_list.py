@@ -10,9 +10,9 @@ def simulate(working_path, sim_config, best):
 if __name__ == "__main__":
     sim_configs_list=[
    {
-        # "model_path": 'POD/POD_Emb6',
+        "model_path": 'saved_models_cantilever_big_range/POD/POD_Emb6',
         # "model_path": 'saved_models/Quad/Quad_least_squares_scale_global_Emb6',
-        "model_path": 'saved_models_cantilever_big_range/PODANN/PODANN_tf_ronly_diff_svd_white_nostand_Lay[200, 200]_Emb20.60_LRsgdr0.001',
+        # "model_path": 'saved_models_cantilever_big_range/PODANN/PODANN_tf_ronly_diff_svd_white_nostand_Lay[200, 200]_Emb11.60_LRsgdr0.001',
         "projection_strategy": 'custom', # ['custom', 'custom_lspg']
         "parameters_selection_strategy": 'random', # ['progressive', 'random']
    },

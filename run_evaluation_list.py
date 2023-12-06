@@ -9,10 +9,12 @@ def evaluate(working_path, model_path, GID_FOM_filename, best, test_validation=F
 
 if __name__ == "__main__":
     paths_list=[
-            # 'POD/POD_Emb6'
+            # 'POD/POD_Emb15'
             # 'Quad/Quad_least_squares_scale_global_Emb6',
-            # 'saved_models_cantilever_big_range/PODANN/PODANN_tf_ronly_diff_svd_white_nostand_Lay[200, 200]_Emb20.60_LRsgdr0.001',
-            'saved_models_cantilever_big_range/POD/POD_Emb14'
+            # 'saved_models_cantilever_big_range/PODANN/PODANN_tf_ronly_diff_svd_white_nostand_Lay[200, 200]_Emb14.60_LRsgdr0.001',
+            # 'saved_models_cantilever_big_range/POD/POD_Emb13'
+            # 'saved_models_fluid_bdf2/PODANN/PODANN_tf_sonly_cropped_diff_svd_white_nostand_crop_Lay[400, 400]_Emb20.200_LRsgdr0.001',
+            'saved_models/PODANN/s_loss_bis',
             ]
     
     # GID_FOM_filename='FOM_equalForces_500steps.npy'

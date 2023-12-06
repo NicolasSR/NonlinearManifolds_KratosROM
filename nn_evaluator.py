@@ -19,6 +19,7 @@ import logging
 tf.get_logger().setLevel(logging.ERROR)
 
 from Kratos_Simulators.structural_mechanics_kratos_simulator import StructuralMechanics_KratosSimulator
+from Kratos_Simulators.fluid_dynamics_kratos_simulator import FluidDynamics_KratosSimulator
 
 from ArchitectureFactories.PODANN_factory import PODANN_Architecture_Factory
 from ArchitectureFactories.Quad_factory import Quad_Architecture_Factory
@@ -76,22 +77,39 @@ class NN_Evaluator():
         highest_filename = sorted(matching_files, key=lambda x: int(x[len(prefix):][:-len('.h5')]))[-1]
         return highest_filename
 
-    def prepare_evaluation_data(self, ):
+    def prepare_evaluation_data(self):
 
         if self.test_validation==False and self.test_small==False:
             # S_test=np.load(self.dataset_path+'S_large_dataset.npy').T
             S_test=np.load(self.dataset_path+'S_test.npy')
             R_test=np.load(self.dataset_path+'R_test.npy')
             # F_test=np.load(self.dataset_path+'F_large_dataset.npy')
-            F_test=np.load(self.dataset_path+'F_test.npy')
+            if self.kratos_simulation is type(StructuralMechanics_KratosSimulator):
+                F_test=np.load(self.dataset_path+'F_test.npy')
+            elif self.kratos_simulation is type(FluidDynamics_KratosSimulator):
+                F_test=None
+            else:
+                 F_test=None
+
         elif self.test_validation:
             S_test=np.load(self.dataset_path+'S_val.npy')
             R_test=np.load(self.dataset_path+'R_val.npy')
-            F_test=np.load(self.dataset_path+'F_val.npy')
+            if self.kratos_simulation is type(StructuralMechanics_KratosSimulator):
+                F_test=np.load(self.dataset_path+'F_val.npy')
+            elif self.kratos_simulation is type(FluidDynamics_KratosSimulator):
+                F_test=None
+            else:
+                 F_test=None
+
         elif self.test_small:
             S_test=np.load(self.dataset_path+'S_test_small.npy')
             R_test=np.load(self.dataset_path+'R_test_small.npy')
-            F_test=np.load(self.dataset_path+'F_test_small.npy')
+            if self.kratos_simulation is type(StructuralMechanics_KratosSimulator):
+                F_test=np.load(self.dataset_path+'F_test_small.npy')
+            elif self.kratos_simulation is type(FluidDynamics_KratosSimulator):
+                F_test=None
+            else:
+                 F_test=None
 
         return S_test, R_test, F_test
 
@@ -108,10 +126,13 @@ class NN_Evaluator():
             return None
         
     def kratos_simulator_selector(self, sim_type):
-        # if 'fluid' in sim_type:
-        #     return KratosSimulator_Fluid
-        # else:
-        return StructuralMechanics_KratosSimulator
+        if sim_type == 'structural':
+            return StructuralMechanics_KratosSimulator
+        elif sim_type == 'fluid':
+            return FluidDynamics_KratosSimulator
+        else:
+            print('Invalid Kratos Analysis type')
+            return None        
     
     def get_pred_snapshots_matrix(self, x_true):
         file_name = 's_pred_matrix'+self.best_name_part+self.name_complement+'.npy'
@@ -242,11 +263,13 @@ class NN_Evaluator():
         S_test, R_test, F_test = self.prepare_evaluation_data()
         print('Shape S_test: ', S_test.shape)
         print('Shape R_test: ', R_test.shape)
-        print('Shape F_test: ', F_test.shape)
+        if self.kratos_simulation is type(StructuralMechanics_KratosSimulator):
+            print('Shape F_test: ', F_test.shape)
 
         S_pred = self.get_pred_snapshots_matrix(S_test)
         R_noForce_pred = self.get_pred_r_noForce_matrix(S_pred)
-        R_force_pred = self.get_pred_r_force_matrix(S_pred, F_test)
+        if self.kratos_simulation is type(StructuralMechanics_KratosSimulator):
+            R_force_pred = self.get_pred_r_force_matrix(S_pred, F_test)
 
         # g_list = self.display_failure_region(0, R_force_pred, 1000, F_test)
         # sorted_indices = g_list.argsort()[::-1]
@@ -272,6 +295,8 @@ class NN_Evaluator():
 
         self.display_snapshot_relative_errors(S_test, S_pred)
         self.display_r_diff_relative_errors(R_test, R_noForce_pred)
-        self.display_r_norm_errors(R_force_pred)
+        if self.kratos_simulation is type(StructuralMechanics_KratosSimulator):
+            self.display_r_norm_errors(R_force_pred)
 
-        self.get_GID_FOM_reconstruction()
+        if self.kratos_simulation is type(StructuralMechanics_KratosSimulator):
+            self.get_GID_FOM_reconstruction()

@@ -7,8 +7,6 @@ from KratosMultiphysics.RomApplication.rom_manager import RomManager
 
 from Kratos_Simulators.structural_mechanics_kratos_simulator import StructuralMechanics_KratosSimulator
 
-from ArchitectureFactories.PODANN_factory import PODANN_Architecture_Factory
-from ArchitectureFactories.Quad_factory import Quad_Architecture_Factory
 from ArchitectureFactories.POD_factory import POD_Architecture_Factory
 
 import tensorflow as tf
@@ -23,42 +21,27 @@ def CustomizeSimulation(cls, global_model, parameters, nn_rom_interface=None):
             super().__init__(model,project_parameters)
             self.custom_param  = custom_param
             self.nn_rom_interface = nn_rom_interface
+            print('==========================================================================')
+            print(self.nn_rom_interface)
+            print('==========================================================================')
 
             if self.nn_rom_interface is None:
                 self.snapshots_matrix_filename = "NMROM_simulation_snaps.npy"
                 self.snapshots_matrix_filename_converged = "NMROM_simulation_snaps_converged.npy"
             else:
                 self.snapshots_matrix_filename, self.snapshots_matrix_filename_converged=nn_rom_interface.get_snapshots_matrix_filename()
-                self._EncodeSnapshot=nn_rom_interface.get_encode_function()
-                self._DecodeSnapshot=nn_rom_interface.get_decode_function()
-                self._GetDecoderGradient=nn_rom_interface.get_get_decoder_gradient_function()
+                self._GetSVDPhiMatrix=nn_rom_interface.get_phi_matrix
 
         def ModifyInitialGeometry(self):
             super().ModifyInitialGeometry()
             self.computing_model_part = self._GetSolver().GetComputingModelPart().GetRootModelPart()
             
-        def Initialize(self):
-            super().Initialize()
-            if not self.nn_rom_interface is None:
-                self._ConfigureEncoderDecoder()
-            """
-            Customize as needed
-            """
             
         def FinalizeSolutionStep(self):
             super().FinalizeSolutionStep()
 
-        def FinalizeSolutionStepConverged(self):
-            pass
-            # snapshots_matrix_converged = list(np.load(self.snapshots_matrix_filename_converged))
-
-            # snapshot = []
-            # for node in self.computing_model_part.Nodes:
-            #     snapshot.append(node.GetSolutionStepValue(KratosMultiphysics.DISPLACEMENT_X))
-            #     snapshot.append(node.GetSolutionStepValue(KratosMultiphysics.DISPLACEMENT_Y))
-            # snapshots_matrix_converged.append(snapshot)
-
-            # np.save(self.snapshots_matrix_filename_converged, snapshots_matrix_converged)
+        # def FinalizeSolutionStepConverged(self):
+        #     pass
             
         def Finalize(self):
             super().Finalize()
@@ -83,53 +66,33 @@ def CustomizeSimulation(cls, global_model, parameters, nn_rom_interface=None):
 
 
 class NN_ROM_Interface():
-    def __init__(self, arch_factory, prepost_processor, enc_network, dec_network, results_path):
+    def __init__(self, arch_factory, prepost_processor, results_path):
         self.arch_factory=arch_factory
         self.prepost_processor=prepost_processor
-        self.enc_network=enc_network
-        self.dec_network=dec_network
 
         self.snapshots_matrix_filename=results_path+'ROM_snaps.npy'
         self.snapshots_matrix_filename_converged=results_path+'ROM_snaps_converged.npy'
-
-
-    def get_encode_function(self):
-        return self.arch_factory.NMROM_encoder(self.prepost_processor, self.enc_network)
-    
-    def get_decode_function(self):
-        return self.arch_factory.NMROM_decoder(self.prepost_processor, self.dec_network)
-    
-    def get_get_decoder_gradient_function(self):
-        return self.arch_factory.NMROM_decoder_gradient(self.prepost_processor, self.dec_network)
     
     def get_snapshots_matrix_filename(self):
         return self.snapshots_matrix_filename, self.snapshots_matrix_filename_converged
     
+    def get_phi_matrix(self):
+        return self.prepost_processor.get_phi()
 
-class NMROM_Simulator():
 
-    def __init__(self, working_path, sim_config, best):
+class NMROM_POD_Simulator():
+
+    def __init__(self, working_path, sim_config):
 
         self.sim_config=sim_config
 
         self.working_path=working_path
         self.model_path=working_path+self.sim_config["model_path"]+'/'
         self.results_path=self.model_path+'NMROM_simulation_results/'
-        if best=='x':
-            self.model_weights_path=self.model_path+'best/'
-            self.model_weights_filename=self.get_last_best_filename(self.model_weights_path, 'weights_x_')
-            self.best_name_part='_bestx_'
-        elif best=='r':
-            self.model_weights_path=self.model_path+'best/'
-            self.model_weights_filename=self.get_last_best_filename(self.model_weights_path, 'weights_r_')
-            self.best_name_part='_bestr_'
-        elif best is None:
-            self.model_weights_path=self.model_path
-            self.model_weights_filename='model_weights.h5'
-            self.best_name_part=''
-        else:
-            print('Value for --best argument is not recognized. Terminating')
-            exit()
+
+        self.model_weights_path=self.model_path
+        self.model_weights_filename='model_weights.h5'
+        self.best_name_part=''
 
         os.makedirs(os.path.dirname(self.results_path), exist_ok=True)
 
@@ -145,11 +108,7 @@ class NMROM_Simulator():
     
     def architecture_factory_selector(self, arch_config):
         arch_type = arch_config["name"]
-        if arch_type == 'PODANN':
-            return PODANN_Architecture_Factory(self.working_path, arch_config)
-        elif arch_type == 'Quad':
-            return Quad_Architecture_Factory(self.working_path, arch_config)
-        elif arch_type == 'POD': 
+        if arch_type == 'POD':
             return POD_Architecture_Factory(self.working_path, arch_config)
         else:
             print('No valid architecture type was selected')
@@ -170,15 +129,15 @@ class NMROM_Simulator():
             mu=qmc.scale(mu, [-3000,-3000], [3000, 3000])
 
             mu_steps=np.expand_dims(np.linalg.norm(mu, axis=1)//10,axis=1)
+            #### THIS IS ONLY FOR THE CANTILEVER LARGE RANGE CASE
+            mu_steps[115,0]=np.linalg.norm(mu[115])//1
+            mu_steps[169,0]=np.linalg.norm(mu[169])//1
+            mu_steps[277,0]=np.linalg.norm(mu[277])//1
+            #### 
+
             mu=np.concatenate([mu,mu_steps], axis=1)
             return mu
         
-        def UpdateProjectParametersNone(parameters, mu=None):
-            """
-            Customize ProjectParameters here for imposing different conditions to the simulations as needed
-            """
-            return parameters
-
         def UpdateProjectParametersRandom(parameters, mu=None):
             """
             Customize ProjectParameters here for imposing different conditions to the simulations as needed
@@ -193,7 +152,7 @@ class NMROM_Simulator():
         if parameters_selection_strategy == "random":
             print('Using random parameters strategy')
             UpdateProjectParameters =  UpdateProjectParametersRandom
-            project_parameters_name = "ProjectParameters_tf_lim1.json"
+            project_parameters_name = "ProjectParameters_tf.json"
             mu=get_multiple_params()
         else:
             print('Parameters selection strategy not valid')
@@ -280,7 +239,7 @@ class NMROM_Simulator():
         
         project_parameters_name, UpdateProjectParameters, mu = self.get_update_strategy_and_parameters_filename(self.sim_config["parameters_selection_strategy"])
 
-        nn_rom_interface = NN_ROM_Interface(arch_factory, prepost_processor, enc_network, dec_network, self.results_path)
+        nn_rom_interface = NN_ROM_Interface(arch_factory, prepost_processor, self.results_path)
 
         def UpdateMaterialParametersFile(parameters, mu=None):
             return parameters
