@@ -209,7 +209,7 @@ class NMROM_Simulator():
         """
         
         general_rom_manager_parameters = KratosMultiphysics.Parameters("""{
-                "rom_stages_to_train" : ["ROM"],             // ["ROM","HROM"]
+                "rom_stages_to_train" : [],             // ["ROM","HROM"]
                 "rom_stages_to_test" : [],              // ["ROM","HROM"]
                 "paralellism" : null,                        // null, TODO: add "compss"
                 "projection_strategy": """+'"'+projection_strategy+'"'+""",            // "lspg", "galerkin", "petrov_galerkin"
