@@ -13,7 +13,7 @@ from Optimization_Strategies.s_only_strategy_batches_crop import S_Only_Strategy
 from Optimization_Strategies.r_only_strategy_batches_crop import R_Only_Strategy_Cropped_KerasModel
 from Optimization_Strategies.s_r_mixed_strategy_batches_crop import S_R_Mixed_Strategy_Cropped_KerasModel
 
-from PrePostProcessors.PODANN_prepost_processors import SVD_White_NoStand_PODANN_PrePostProcessor
+from PrePostProcessors.PODANN_prepost_processors import SVD_White_NoStand_PODANN_PrePostProcessor, SVD_Rerange_PODANN_PrePostProcessor
 from PrePostProcessors.PODANN_prepost_processors import SVD_White_NoStand_Cropping_PODANN_PrePostProcessor
 
 class PODANN_Architecture_Factory(Base_Architecture_Factory):
@@ -105,6 +105,8 @@ class PODANN_Architecture_Factory(Base_Architecture_Factory):
             prepost_processor = SVD_White_NoStand_PODANN_PrePostProcessor(working_path, dataset_path)
         elif self.arch_config["prepost_process"] == 'svd_white_nostand_crop':
             prepost_processor = SVD_White_NoStand_Cropping_PODANN_PrePostProcessor(working_path, dataset_path)
+        elif self.arch_config["prepost_process"] == 'svd_rerange':
+            prepost_processor = SVD_Rerange_PODANN_PrePostProcessor(working_path, dataset_path)
         else:
             print('Normalization strategy is not valid')
             prepost_processor = None

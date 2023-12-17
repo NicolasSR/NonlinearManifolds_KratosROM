@@ -4,7 +4,7 @@ import tensorflow as tf
 
 import keras
 from keras import backend
-from keras.utils import io_utils
+# from keras.utils import io_utils
 
 def get_lr_schedule_func(lr_config):
 
@@ -105,7 +105,11 @@ class LR_Scheduler(keras.callbacks.Callback):
             )
         backend.set_value(self.model.optimizer.lr, backend.get_value(lr))
         if self.verbose > 0:
-            io_utils.print_msg(
+            # io_utils.print_msg(
+            #     f"\nEpoch {epoch + 1}: LR_Scheduler setting"
+            #     f"learning rate to {lr}."
+            # )
+            print(
                 f"\nEpoch {epoch + 1}: LR_Scheduler setting"
                 f"learning rate to {lr}."
             )

@@ -106,6 +106,33 @@ class NN_Trainer():
         print('======= Loading training data =======')
         input_data, target_data, val_input, val_target = prepost_processor.get_training_data(self.train_config["architecture"])
 
+        target_data=list(target_data)
+        val_target=list(val_target)
+
+        F_train = np.load(self.train_config['dataset_path']+'F_train.npy')
+        F_val = np.load(self.train_config['dataset_path']+'F_val.npy')
+        cropped_zones = np.array([[[1500,3000],[2000,3000]],
+            [[-1700,-200],[350,1350]],
+            [[-1000,1000],[-2500,-700]]])
+    
+        gap_sample_ids_train=np.array([])
+        gap_sample_ids_val=np.array([])
+        for rect in cropped_zones:
+            ids_train=np.squeeze(np.argwhere((F_train[:,0,0]>rect[0,0]) & (F_train[:,0,0]<rect[0,1]) & (F_train[:,6,1]>rect[1,0]) & (F_train[:,6,1]<rect[1,1])),axis=1)
+            gap_sample_ids_train=np.concatenate([gap_sample_ids_train,ids_train], axis=0).astype(int)
+            ids_val=np.squeeze(np.argwhere((F_val[:,0,0]>rect[0,0]) & (F_val[:,0,0]<rect[0,1]) & (F_val[:,6,1]>rect[1,0]) & (F_val[:,6,1]<rect[1,1])),axis=1)
+            gap_sample_ids_val=np.concatenate([gap_sample_ids_val,ids_val], axis=0).astype(int)
+    
+        print(gap_sample_ids_train.shape)
+        print(gap_sample_ids_val.shape)
+
+        input_data = np.delete(input_data, gap_sample_ids_train, axis=0)
+        for i in range(len(target_data)):
+            target_data[i] = np.delete(target_data[i], gap_sample_ids_train, axis=0)
+        val_input = np.delete(val_input, gap_sample_ids_val, axis=0)
+        for i in range(len(val_target)):
+            val_target[i] = np.delete(val_target[i], gap_sample_ids_val, axis=0)
+
         print('Shape input_data:', input_data.shape)
         for i in range(len(target_data)):
             print('Shape target_data [', i, ']: ', target_data[i].shape)

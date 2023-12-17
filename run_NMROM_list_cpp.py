@@ -16,10 +16,10 @@ def simulate(working_path, sim_config):
 if __name__ == "__main__":
     sim_configs_list=[
    {
-        "model_path": 'saved_models_cantilever_big_range/PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb14.60_LRsgdr0.001',
+        "model_path": 'saved_models_cantilever_big_range/PODANN/PODANN_tf_ronly_diff_svd_white_nostand_Lay[200, 200]_Emb6.60_LRsgdr0.001',
         "projection_strategy": 'custom', # ['custom', 'pod']
         "parameters_selection_strategy": 'random', # ['progressive', 'random']
-        "best": 'x'
+        "best": 'r'
    },
 #    {
 #         "model_path": 'saved_models_cantilever_big_range/POD/POD_Emb14',

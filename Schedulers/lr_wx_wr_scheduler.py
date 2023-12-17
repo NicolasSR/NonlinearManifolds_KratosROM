@@ -4,7 +4,7 @@ import tensorflow as tf
 
 import keras
 from keras import backend
-from keras.utils import io_utils
+# from keras.utils import io_utils
 
 class LR_WX_WR_Scheduler(keras.callbacks.Callback):
     """ Custom Learning rate scheduler.
@@ -51,7 +51,11 @@ class LR_WX_WR_Scheduler(keras.callbacks.Callback):
         # self.model.w_tf = tf.constant(w, dtype=tf.float64)
         self.model.wr = wr
         if self.verbose > 0:
-            io_utils.print_msg(
+            # io_utils.print_msg(
+            #     f"\nEpoch {epoch + 1}: CustomLearningRateScheduler setting"
+            #     f"learning rate to {lr}, wx to {wx} and wr to {wr}."
+            # )
+            print(
                 f"\nEpoch {epoch + 1}: CustomLearningRateScheduler setting"
                 f"learning rate to {lr}, wx to {wx} and wr to {wr}."
             )
