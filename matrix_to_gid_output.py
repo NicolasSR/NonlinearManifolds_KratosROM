@@ -82,19 +82,26 @@ def print_results_to_gid(model_part, snapshot_matrix, residuals_matrix):
 
 if __name__ == "__main__":
 
-    snapshots_matrix=np.load('saved_models/PODANN/PODANN_tf_ronly_diff_svd_white_nostand_Lay[40, 40]_Emb6.20_LRtri20.001_bis/scipy_solver_results/Scipy_snapshots_matrix.npy')
+    # snapshots_matrix=np.load('saved_models_cantilever_big_range/POD/POD_Emb20/NMROM_simulation_results_random300/ROM_snaps_converged_corrected.npy')
+    snapshots_matrix=np.load('datasets_rubber_hyperelastic_cantilever_big_range/S_test_small.npy')
     # snapshots_matrix=np.load('Quad_x_snapshots.npy')
     # snapshots_matrix=np.load('Rel_quad_scipy_diff.npy')
     # snapshots_matrix=np.load('FOM_snaps_30steps.npy')
-    reactions_matrix=np.load('saved_models/PODANN/PODANN_tf_ronly_diff_svd_white_nostand_Lay[40, 40]_Emb6.20_LRtri20.001_bis/scipy_solver_results/Scipy_reactions_matrix.npy')
+    reactions_matrix=np.load('datasets_rubber_hyperelastic_cantilever_big_range/R_test_small.npy')
     # reactions_matrix=np.load('Quad_reactions_snapshots.npy')
+
+    # reactions_matrix_log=np.log(1+np.abs(reactions_matrix))
+    # reactions_matrix_sign=reactions_matrix/np.abs(reactions_matrix)
+    # reactions_matrix=reactions_matrix_log*reactions_matrix_sign
 
     # plt.plot(reactions_matrix[0][0])
     # plt.show()
     # exit()
 
+    # reactions_matrix=snapshots_matrix.copy()*0.0
+
     current_model = KMP.Model()
     model_part = current_model.CreateModelPart("main_model_part")
-    create_out_mdpa(model_part, "datasets_two_forces_dense_extended/dense_2forces_cantilever_thick_dense")
+    create_out_mdpa(model_part, "datasets_rubber_hyperelastic_cantilever_big_range/rubber_hyperelastic_cantilever")
 
     print_results_to_gid(model_part, snapshots_matrix, reactions_matrix)

@@ -39,9 +39,6 @@ class Model_Info:
 
         self.get_frob_results(recons_s_ref, nmrom_s_ref)
 
-
-
-
     def get_results_paths(self, best_type_decorator, test_type_decorator):
         self.recons_s_path = self.model_path+'reconstruction_evaluation_results/s_pred_matrix'+best_type_decorator+test_type_decorator+'.npy'
         self.recons_rForce_path = self.model_path+'reconstruction_evaluation_results/r_force_pred_matrix'+best_type_decorator+test_type_decorator+'.npy'
@@ -144,6 +141,21 @@ def plot_rRorce_error(model_info_list):
 
     plt.show()
 
+def print_parametric_space():
+    samples=np.array([[ 1265.98946765, -2656.01535315],
+ [-1734.01053235,  -656.01535315],
+ [ 2765.98946765,  1343.98464685],
+ [ -234.01053235, -1322.68201982],
+ [  515.98946765,   677.31798018],
+ [-2484.01053235,  2677.31798018]])
+    plt.scatter(samples[:,0],samples[:,1])
+    plt.xlim([-3000,3000])
+    plt.ylim([-3000,3000])
+    plt.xlabel("Line load x [N/m]")
+    plt.ylabel("Line load y [N/m]")
+    plt.gca().set_aspect('equal')
+    plt.show()
+
 
 if __name__=="__main__":
 
@@ -165,6 +177,8 @@ if __name__=="__main__":
     # plt.grid(which='major')
     # plt.show()
 
+    # print_parametric_space()
+
     # exit()
 
     result_cases = [{
@@ -172,13 +186,29 @@ if __name__=="__main__":
         "label": 'rLoss',
         "q_inf": 6
      },{
-        "model_path": 'PODANN/PODANN_tf_ronly_diff_svd_white_nostand_Lay[200, 200]_Emb11.60_LRsgdr0.001/',
+        "model_path": 'PODANN/PODANN_tf_ronly_diff_svd_white_nostand_Lay[200, 200]_Emb8.60_LRsgdr0.001/',
         "label": 'rLoss',
-        "q_inf": 11
+        "q_inf": 8
+     },{
+        "model_path": 'PODANN/PODANN_tf_ronly_diff_svd_white_nostand_Lay[200, 200]_Emb10.60_LRsgdr0.001/',
+        "label": 'rLoss',
+        "q_inf": 10
+     },{
+        "model_path": 'PODANN/PODANN_tf_ronly_diff_svd_white_nostand_Lay[200, 200]_Emb12.60_LRsgdr0.001/',
+        "label": 'rLoss',
+        "q_inf": 12
      },{
         "model_path": 'PODANN/PODANN_tf_ronly_diff_svd_white_nostand_Lay[200, 200]_Emb14.60_LRsgdr0.001/',
         "label": 'rLoss',
         "q_inf": 14
+     },{
+        "model_path": 'PODANN/PODANN_tf_ronly_diff_svd_white_nostand_Lay[200, 200]_Emb16.60_LRsgdr0.001/',
+        "label": 'rLoss',
+        "q_inf": 16
+     },{
+        "model_path": 'PODANN/PODANN_tf_ronly_diff_svd_white_nostand_Lay[200, 200]_Emb18.60_LRsgdr0.001/',
+        "label": 'rLoss',
+        "q_inf": 18
      },{
         "model_path": 'PODANN/PODANN_tf_ronly_diff_svd_white_nostand_Lay[200, 200]_Emb20.60_LRsgdr0.001/',
         "label": 'rLoss',
@@ -187,34 +217,50 @@ if __name__=="__main__":
         "model_path": 'PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb6.60_LRsgdr0.001/',
         "label": 'sLoss',
         "q_inf": 6
-     },{
-        "model_path": 'PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb11.60_LRsgdr0.001/',
+    },{
+        "model_path": 'PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb8.60_LRsgdr0.001/',
         "label": 'sLoss',
-        "q_inf": 11
+        "q_inf": 8
+     },{
+        "model_path": 'PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb10.60_LRsgdr0.001/',
+        "label": 'sLoss',
+        "q_inf": 10
+     },{
+        "model_path": 'PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb12.60_LRsgdr0.001/',
+        "label": 'sLoss',
+        "q_inf": 12
      },{
         "model_path": 'PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb14.60_LRsgdr0.001/',
         "label": 'sLoss',
         "q_inf": 14
      },{
+        "model_path": 'PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb16.60_LRsgdr0.001/',
+        "label": 'sLoss',
+        "q_inf": 16
+     },{
+        "model_path": 'PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb18.60_LRsgdr0.001/',
+        "label": 'sLoss',
+        "q_inf": 18
+     },{
         "model_path": 'PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb20.60_LRsgdr0.001/',
         "label": 'sLoss',
         "q_inf": 20
-     },{
-        "model_path": 'POD/POD_Emb6/',
-        "label": 'POD',
-        "q_inf": 6
-     },{
-        "model_path": 'POD/POD_Emb11/',
-        "label": 'POD',
-        "q_inf": 11
-     },{
-        "model_path": 'POD/POD_Emb14/',
-        "label": 'POD',
-        "q_inf": 14
-     },{
-        "model_path": 'POD/POD_Emb20/',
-        "label": 'POD',
-        "q_inf": 20
+    #  },{
+    #     "model_path": 'POD/POD_Emb6/',
+    #     "label": 'POD',
+    #     "q_inf": 6
+    #  },{
+    #     "model_path": 'POD/POD_Emb11/',
+    #     "label": 'POD',
+    #     "q_inf": 11
+    #  },{
+    #     "model_path": 'POD/POD_Emb14/',
+    #     "label": 'POD',
+    #     "q_inf": 14
+    #  },{
+    #     "model_path": 'POD/POD_Emb20/',
+    #     "label": 'POD',
+    #     "q_inf": 20
     }]
     
     parser = argparse.ArgumentParser()

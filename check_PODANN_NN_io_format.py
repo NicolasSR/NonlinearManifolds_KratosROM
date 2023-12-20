@@ -30,7 +30,7 @@ tf.keras.backend.set_floatx('float64')
 if __name__ == "__main__":
 
     working_path=''
-    model_path=working_path+'saved_models/PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[40, 40]_Emb6.20_LRtri20.001/'
+    model_path=working_path+'saved_models_cantilever_big_range/PODANN/PODANN_tf_sfarhat_diff_svd_Lay[200, 200]_Emb6.60_LRsgdr0.001/'
 
     with open(model_path+"train_config.npy", "rb") as train_config_file:
         train_config = np.load(train_config_file,allow_pickle='TRUE').item()
@@ -47,11 +47,24 @@ if __name__ == "__main__":
     # Select the type of preprocessing (normalisation)
     prepost_processor=arch_factory.prepost_processor_selector(working_path, train_config["dataset_path"])
 
-    S_FOM_orig = np.load(working_path+train_config['dataset_path']+'FOM.npy')
-    arch_factory.configure_prepost_processor(prepost_processor, S_FOM_orig, crop_mat_tf, crop_mat_scp)
+    S_test = np.load(working_path+train_config['dataset_path']+'S_test_small.npy')
+    arch_factory.configure_prepost_processor(prepost_processor, S_test, crop_mat_tf, crop_mat_scp)
 
-    S_out=prepost_processor.preprocess_nn_output_data(S_FOM_orig)
-    S_in, _=prepost_processor.preprocess_input_data(S_FOM_orig)
+    S_out=prepost_processor.preprocess_nn_output_data(S_test)
+    S_in, _=prepost_processor.preprocess_input_data(S_test)
 
     plt.boxplot(np.concatenate([S_in,S_out], axis=1))
+    plt.show()
+
+    print('======= Instantiating TF Model =======')
+    network, _, __ = arch_factory.define_network(prepost_processor, kratos_simulation)
+    
+    print('======= Loading TF Model weights =======')
+    network.load_weights(model_path+"model_weights.h5")
+    
+    Q_sup_pred = network(S_in).numpy()
+
+    rel_err_features = np.abs(Q_sup_pred-S_out)/np.abs(S_out)
+
+    plt.boxplot(rel_err_features)
     plt.show()

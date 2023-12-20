@@ -366,3 +366,81 @@ class SVD_Rerange_PODANN_PrePostProcessor(Base_PrePostProcessor):
     def get_phi_matrices(self):
         return self.phi_inf, self.phi_sup
     
+
+
+class SVD_PODANN_PrePostProcessor(Base_PrePostProcessor):
+    def __init__(self, working_path, dataset_path):
+        super().__init__()
+        self.phi_inf = None
+        self.phi_inf_tf = None
+        self.phi_sup = None
+        self.phi_sup_tf = None
+        self.dataset_path=working_path+dataset_path
+
+    def configure_processor(self, S, svd_inf_size, svd_sup_size, crop_mat_tf, crop_mat_scp):
+        print('Applying SVD for PODANN architecture')
+
+        try:
+            self.phi=np.load(self.dataset_path+'POD/phi.npy')
+        except IOError:
+            print("No precomputed phi matrix found. Please train a POD case to generate it")
+
+        self.phi_inf=self.phi[:,:svd_inf_size].copy()
+        self.phi_sup=self.phi[:,svd_inf_size:svd_sup_size].copy()
+        print('Phi_inf matrix shape: ', self.phi_inf.shape)
+        print('Phi_sgs matrix shape: ', self.phi_sup.shape)
+        self.phi_inf_tf=tf.constant(self.phi_inf)
+        self.phi_sup_tf=tf.constant(self.phi_sup)
+
+        ## Check reconstruction error
+        S_recons_aux1=self.preprocess_nn_output_data(S)
+        S_recons_aux2, _ =self.preprocess_input_data(S)
+        S_recons = self.postprocess_output_data(S_recons_aux1, (S_recons_aux2, None))
+        print('Reconstruction error SVD (Frob): ', np.linalg.norm(S_recons-S)/np.linalg.norm(S))
+        err_aux=np.linalg.norm(S-S_recons, ord=2, axis=1)/np.linalg.norm(S, ord=2, axis=1)
+        # print('Reconstruction error SVD (Mean L2): ', np.sum(err_aux)/S.shape[0])
+        print('Reconstruction error SVD (Mean L2): ', np.exp(np.sum(np.log(err_aux))/S.shape[0]))
+
+    def preprocess_nn_output_data(self, snapshot):
+        # Returns q_sup from input snapshots
+        output_data=snapshot.copy()
+        output_data=np.matmul(self.phi_sup.T,output_data.T).T
+        return output_data
+    
+    def preprocess_nn_output_data_tf(self,snapshot_tensor):
+        # Returns q_sup from input snapshots
+        output_tensor=tf.transpose(tf.linalg.matmul(self.phi_sup_tf,snapshot_tensor,transpose_a=True,transpose_b=True))
+        return output_tensor
+    
+    def preprocess_input_data(self, snapshot):
+        # Returns q_inf from input snapshots
+        output_data=snapshot.copy()
+        output_data=np.matmul(self.phi_inf.T,output_data.T).T
+        return output_data, None
+    
+    def preprocess_input_data_tf(self, snapshot_tensor):
+        # Returns q_inf from input snapshots
+        output_tensor=tf.transpose(tf.linalg.matmul(self.phi_inf_tf,snapshot_tensor,transpose_a=True,transpose_b=True))
+        return output_tensor, None
+
+    def postprocess_output_data(self, q_sup, aux_norm_data):
+        # Returns reconstructed u from given q_inf and q_sup
+        q_inf, _ = aux_norm_data
+        output_data_1=q_inf.copy()
+        output_data_1=np.matmul(self.phi_inf,output_data_1.T).T
+        output_data_2=q_sup.copy()
+        output_data_2=np.matmul(self.phi_sup,output_data_2.T).T
+        output_data = output_data_1 + output_data_2
+        return output_data
+    
+    def postprocess_output_data_tf(self, q_sup_tensor, aux_norm_tensors):
+        # Returns reconstructed u from given q_inf and q_sup
+        q_inf_tensor, _ = aux_norm_tensors
+        output_tensor_1=tf.transpose(tf.linalg.matmul(self.phi_inf_tf,q_inf_tensor,transpose_b=True))
+        output_tensor_2=tf.transpose(tf.linalg.matmul(self.phi_sup_tf,q_sup_tensor,transpose_b=True))
+        output_tensor = output_tensor_1 + output_tensor_2
+        return output_tensor
+    
+    def get_phi_matrices(self):
+        return self.phi_inf, self.phi_sup
+    
