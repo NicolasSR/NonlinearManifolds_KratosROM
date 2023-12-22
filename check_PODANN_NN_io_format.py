@@ -30,7 +30,7 @@ tf.keras.backend.set_floatx('float64')
 if __name__ == "__main__":
 
     working_path=''
-    model_path=working_path+'saved_models_cantilever_big_range/PODANN/PODANN_tf_sfarhat_diff_svd_Lay[200, 200]_Emb6.60_LRsgdr0.001/'
+    model_path=working_path+'saved_models_cantilever_big_range/PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb6.60_LRsgdr0.001/'
 
     with open(model_path+"train_config.npy", "rb") as train_config_file:
         train_config = np.load(train_config_file,allow_pickle='TRUE').item()

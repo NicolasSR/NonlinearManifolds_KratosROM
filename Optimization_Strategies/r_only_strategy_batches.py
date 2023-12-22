@@ -93,6 +93,11 @@ class R_Only_Strategy_KerasModel(keras.Model):
 
         grad_loss = self.get_gradients(trainable_vars, input_batch, v_loss_r_batch)
 
+        # for i, grad in enumerate(grad_loss):
+        #     grad_loss[i] = grad*100000000
+            # tf.print(tf.reduce_max(grad_loss[i]))
+            # tf.print(tf.reduce_mean(grad_loss[i]))
+
         self.optimizer.apply_gradients(zip(grad_loss, trainable_vars))
 
         # Compute our own metrics
@@ -107,7 +112,7 @@ class R_Only_Strategy_KerasModel(keras.Model):
         x_pred_batch = self(input_batch, training=False)
         x_pred_denorm_batch = self.prepost_processor.postprocess_output_data_tf(x_pred_batch,(input_batch,None))
         err_x_batch = target_snapshot_batch - x_pred_denorm_batch
-        loss_x_batch = tf.math.reduce_sum(tf.math.square(err_x_batch), axis=1)
+        loss_x_batch = tf.math.reduce_mean(tf.math.square(err_x_batch), axis=1)
 
         err_r_batch = self.get_err_r(x_pred_denorm_batch, target_aux_batch)
         loss_r_batch, _ = self.r_loss_scale(err_r_batch)

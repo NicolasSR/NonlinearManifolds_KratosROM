@@ -144,21 +144,14 @@ class PODANN_Architecture_Factory(Base_Architecture_Factory):
             if not dropout_rate is None:
                 decoder_out = tf.keras.layers.Dropout(dropout_rate)(decoder_out)
         decoder_out = tf.keras.layers.Dense(output_size, activation=tf.keras.activations.linear, kernel_initializer=HeNormal(), use_bias=use_bias, dtype=tf.float64)(decoder_out)
-       
-
-        """ decoder_out = decod_input
-        for layer_size in self.arch_config["hidden_layers"]:
-            decoder_out = tf.keras.layers.Dense(layer_size, activation=tf.keras.activations.linear, kernel_initializer=HeNormal(), use_bias=use_bias, dtype=tf.float64)(decoder_out)
-            decoder_out = tf.keras.layers.BatchNormalization()(decoder_out)
-            decoder_out = tf.keras.layers.ELU()(decoder_out)
-        decoder_out = tf.keras.layers.Dense(output_size, activation=tf.keras.activations.linear, kernel_initializer=HeNormal(), use_bias=use_bias, dtype=tf.float64)(decoder_out)
-        """
 
         network = keras_submodel(prepost_processor, kratos_simulation, self.arch_config["opt_strategy"], decod_input, decoder_out, name='q_sup_estimator')
         
         network.generate_gradient_sum_functions()
 
-        network.compile(optimizer=tf.keras.optimizers.experimental.AdamW(), run_eagerly=network.run_eagerly)
+        network.compile(optimizer=tf.keras.optimizers.experimental.AdamW(epsilon=1e-17), run_eagerly=network.run_eagerly)
+        # network.compile(optimizer=tf.keras.optimizers.experimental.AdamW(), run_eagerly=network.run_eagerly)
+        # network.compile(optimizer=tf.keras.optimizers.SGD(), run_eagerly=network.run_eagerly)
 
         network.summary()
 

@@ -142,6 +142,7 @@ class Base_Architecture_Factory(abc.ABC):
             input_data, target_data,
             epochs=self.arch_config["opt_strategy"]["epochs"],
             shuffle=True,
+            # shuffle=False,
             batch_size=self.arch_config["opt_strategy"]["batch_size"],
             validation_data=(val_input,val_target),
             validation_batch_size=1,

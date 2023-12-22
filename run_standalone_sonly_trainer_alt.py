@@ -14,13 +14,13 @@ from matplotlib import pyplot as plt
 
 if __name__=="__main__":
 
-    model_name='test_sonly_gradients_sgd'
+    model_name='test_sonly_gradients_adamw'
     n_inf=6
     n_sup=60
     layers_size=[200,200]
     batch_size=16
-    epochs=10
-    lr=30000.0
+    epochs=200
+    lr=0.001
 
     working_path=''
     model_path=working_path+'saved_models_cantilever_big_range/PODANN_Standalone/'+model_name+'/'
@@ -31,7 +31,7 @@ if __name__=="__main__":
     S_train = np.load(dataset_path+'S_train.npy')
     S_val = np.load(dataset_path+'S_val.npy')
 
-    S_train=S_train[:14]
+    # S_train=S_train[:14]
 
     phi = np.load(dataset_path+'PODANN/phi_whitenostand.npy')
     sigma_vec = np.load(dataset_path+'PODANN/sigma_whitenostand.npy')
@@ -62,10 +62,10 @@ if __name__=="__main__":
     print('Q_inf_val matrix shape: ', Q_inf_val.shape)
     print('Q_sup_val matrix shape: ', Q_sup_val.shape)
 
-    target_train=(S_train.T-phi_inf@sigma_inf@Q_inf_train.T).T
-    target_val=(S_val.T-phi_inf@sigma_inf@Q_inf_val.T).T
-    print('target_train matrix shape: ', target_train.shape)
-    print('target_val matrix shape: ', target_val.shape)
+    # target_train=(S_train.T-phi_inf@sigma_inf@Q_inf_train.T).T
+    # target_val=(S_val.T-phi_inf@sigma_inf@Q_inf_val.T).T
+    # print('target_train matrix shape: ', target_train.shape)
+    # print('target_val matrix shape: ', target_val.shape)
 
     n_dofs=S_train.shape[1]
 
@@ -76,11 +76,14 @@ if __name__=="__main__":
     for size in layers_size:
         layer_out=layers.Dense(size, 'elu', use_bias=False, kernel_initializer="he_normal")(layer_out)
     layer_out=layers.Dense(n_sup-n_inf, 'linear', use_bias=False, kernel_initializer="he_normal")(layer_out)
-    output_layer=layers.Lambda(lambda x: tf.transpose(tf.matmul(phi_sup,tf.linalg.matmul(sigma_sup,x,transpose_b=True))), dtype=tf.float64)(layer_out)
+    output_layer_aux_1=layers.Lambda(lambda x: tf.transpose(tf.matmul(phi_sup,tf.linalg.matmul(sigma_sup,x,transpose_b=True))), dtype=tf.float64)(layer_out)
+    output_layer_aux_2=layers.Lambda(lambda x: tf.transpose(tf.matmul(phi_inf,tf.linalg.matmul(sigma_inf,x,transpose_b=True))), dtype=tf.float64)(input_layer)
+    output_layer=layers.Add()([output_layer_aux_1, output_layer_aux_2])
+
 
     network=Model(input_layer, output_layer)
-    # network.compile(AdamW(0.001), loss='mse', run_eagerly=False)
-    network.compile(SGD(lr), loss='mse', run_eagerly=False)
+    network.compile(AdamW(lr), loss='mse', run_eagerly=False)
+    # network.compile(SGD(lr), loss='mse', run_eagerly=False)
     network.summary()
 
     print('======= Loading saved weights =======')
@@ -115,7 +118,7 @@ if __name__=="__main__":
     callbacks = [LearningRateScheduler(lr_sgdr_schedule, verbose=1)]
 
     # history = network.fit(S_train, target_train, batch_size=batch_size, epochs=epochs, validation_data=(S_val,target_val), shuffle=True, callbacks=callbacks)
-    history = network.fit(Q_inf_train, target_train, batch_size=batch_size, epochs=epochs, validation_data=(Q_inf_val,target_val), shuffle=True, validation_batch_size=1)
+    history = network.fit(Q_inf_train, S_train, batch_size=batch_size, epochs=epochs, validation_data=(Q_inf_val,S_val), shuffle=False, validation_batch_size=1)
 
     train_config={
         "sim_type": 'structural',

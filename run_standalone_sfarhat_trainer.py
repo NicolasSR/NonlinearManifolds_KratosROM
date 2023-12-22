@@ -5,19 +5,19 @@ import json
 import tensorflow as tf
 from keras.models import Model
 from keras import layers
-from keras.optimizers import AdamW
+from keras.optimizers import AdamW, SGD
 from keras.callbacks import LearningRateScheduler
 
 
 
 if __name__=="__main__":
 
-    model_name='test_sfarhat_lrsgdr'
+    model_name='test_gradients'
     n_inf=6
     n_sup=60
     layers_size=[200,200]
     batch_size=16
-    epochs=800
+    epochs=200
 
     working_path=''
     model_path=working_path+'saved_models_cantilever_big_range/PODANN_Standalone/'+model_name+'/'
@@ -26,7 +26,10 @@ if __name__=="__main__":
     os.makedirs(model_path, exist_ok=False)
 
     S_train = np.load(dataset_path+'S_train.npy')
+    # S_train = S_train[[0]]
     S_val = np.load(dataset_path+'S_val.npy')
+
+    print('S_train: ', S_train)
 
     phi = np.load(dataset_path+'POD/phi.npy')
 
@@ -44,6 +47,9 @@ if __name__=="__main__":
     print('Q_inf_val matrix shape: ', Q_inf_val.shape)
     print('Q_sup_val matrix shape: ', Q_sup_val.shape)
 
+    print('Q_inf_train: ', Q_inf_train)
+    print('Q_sup_train: ', Q_sup_train)
+
     input_layer=layers.Input((n_inf,))
     layer_out=input_layer
     for size in layers_size:
@@ -52,7 +58,11 @@ if __name__=="__main__":
 
     network=Model(input_layer, output_layer)
     network.compile(AdamW(0.001), loss='mse', run_eagerly=False)
+    # network.compile(SGD(0.001), loss='mse', run_eagerly=False)
     network.summary()
+
+    # print('======= Loading saved weights =======')
+    # network.load_weights(working_path+'saved_models_cantilever_big_range/PODANN_Standalone/test_sfarhat_lrsgdr/model_weights.h5')
 
     def lr_scheduler(epoch, lr):
         if epoch>200:
@@ -79,10 +89,12 @@ if __name__=="__main__":
             x=np.abs(epoch/cycle_length-cycle)
             new_lr = min_lr+(max_lr-min_lr)*0.5*(1+np.cos(x*np.pi))/scale_factor**cycle
         return new_lr
+    
+    # callbacks = [LearningRateScheduler(lr_sgdr_schedule, verbose=1)]
 
-    callbacks = [LearningRateScheduler(lr_sgdr_schedule, verbose=1)]
-
-    history = network.fit(Q_inf_train, Q_sup_train, batch_size=batch_size, epochs=epochs, validation_data=(Q_inf_val,Q_sup_val), shuffle=True, callbacks=callbacks)
+    print('======= Training model =======')
+    # history = network.fit(Q_inf_train, Q_sup_train, batch_size=batch_size, epochs=epochs, validation_data=(Q_inf_val,Q_sup_val), shuffle=True, callbacks=callbacks)
+    history = network.fit(Q_inf_train, Q_sup_train, batch_size=batch_size, epochs=epochs, validation_data=(Q_inf_val,Q_sup_val), shuffle=True)
 
     train_config={
         "sim_type": 'structural',
@@ -98,10 +110,10 @@ if __name__=="__main__":
                 "r_loss_type": 'diff',  # ['norm, 'diff']
                 "r_loss_log_scale": False,
                 "learning_rate": ('const', 0.001), # ('steps', 0.001, 10, 1e-6, 100), ('const', 0.001), ('tri2', 0.001, 1e-6, 250)
-                "batch_size": 16,
-                "epochs": 400
+                "batch_size": batch_size,
+                "epochs": epochs
             },
-            "finetune_from": None,
+            "finetune_from": 'saved_models_cantilever_big_range/PODANN_Standalone/test_sfarhat_lrsgdr/',
             "augmented": False,
             "use_bias": False,
             "use_dropout": None

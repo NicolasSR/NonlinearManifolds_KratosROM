@@ -79,8 +79,8 @@ if __name__ == "__main__":
         # 'saved_models_cantilever_big_range/POD/POD_Emb14',
         # 'Quad/Quad_least_squares_scale_global_Emb6',
         # 'PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[40, 40]_Emb6.20_LRsgdr0.001',
-        'saved_models_cantilever_big_range/PODANN/PODANN_tf_ronly_diff_svd_white_nostand_Lay[200, 200]_Emb6.60_LRsgdr0.001'
-        # 'saved_models_cantilever_big_range/POD/POD_Emb20'
+        'saved_models_cantilever_big_range/PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb6.60_LRsgdr0.001'
+        # 'saved_models_cantilever_big_range/POD/POD_Emb6'
     ]
 
     # reference_snapshots_filename='datasets_two_forces_dense_extended/S_mu_dataset_300.npy'
@@ -108,10 +108,10 @@ if __name__ == "__main__":
         print('Error norms')
         calculate_X_norm_error(S_fom, S_rom)
 
-        plot_rel_l2_errors(S_fom, S_rom)
+        # plot_rel_l2_errors(S_fom, S_rom)
 
-        draw_x_error_abs_image(S_fom, S_rom)
-        draw_x_error_rel_image(S_fom, S_rom)
+        # draw_x_error_abs_image(S_fom, S_rom)
+        # draw_x_error_rel_image(S_fom, S_rom)
 
 
         print('======= Getting reactions matrix =======')
@@ -125,10 +125,13 @@ if __name__ == "__main__":
 
         F_FOM = np.load(reference_forces_filename)
 
+        r_noForce = kratos_simulation.get_r_array(S_rom)
+        np.save(model_path+'/NMROM_simulation_results_random300/ROM_residuals_noForce_converged_corrected.npy', r_noForce)
+
         r_force = kratos_simulation.get_r_forces_array(S_rom, F_FOM)
         np.save(model_path+'/NMROM_simulation_results_random300/ROM_residuals_converged_corrected.npy', r_force)
         # np.save(model_path+'/NMROM_simulation_results_3000steps_iter1/ROM_residuals_converged.npy', r_force)
         # np.save(model_path+'/reconstruction_evaluation_results/reactions_recons_FOM_300steps_xneg_yne_bestr_.npy', r_force)
 
         calculate_R_norm_error(r_force)
-        plot_l2_errors(r_force,0.0)
+        # plot_l2_errors(r_force,0.0)

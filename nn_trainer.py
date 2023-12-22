@@ -113,6 +113,14 @@ class NN_Trainer():
         for i in range(len(val_target)):
             print('Shape target_data [', i, ']: ', val_target[i].shape)
 
+        # input_data=input_data[:14]
+        # target_data=list(target_data)
+        # target_data[0]=target_data[0][:14]
+        # target_data[1]=target_data[1][:14]
+
+        print('input data: ', input_data)
+        print('target_data: ', target_data)
+
         print('======= Saving AE Config =======')
         with open(self.model_path+"train_config.npy", "wb") as ae_config_file:
             np.save(ae_config_file, self.train_config)

@@ -59,11 +59,11 @@ class S_Farhat_Strategy_KerasModel(keras.Model):
         with tf.GradientTape(persistent=False) as tape_d:
             tape_d.watch(trainable_vars)
             q_pred_batch = self(input_batch, training=True)
-            q_error_squared = tf.math.reduce_sum(tf.math.square(q_pred_batch-q_target_batch), axis=1)
+            q_error_squared = tf.math.reduce_mean(tf.math.square(q_pred_batch-q_target_batch), axis=1)
             q_loss = tf.math.reduce_mean(q_error_squared)
         grad_loss=tape_d.gradient(q_loss, trainable_vars)
 
-        return grad_loss
+        return grad_loss, q_loss
 
     def generate_gradient_sum_functions(self):
         # @tf.function
@@ -81,18 +81,27 @@ class S_Farhat_Strategy_KerasModel(keras.Model):
         trainable_vars = self.trainable_variables
 
 
-        v_loss_x_batch, x_pred_denorm_batch = self.get_v_loss_x(input_batch, target_snapshot_batch)
-        loss_x_batch = tf.math.reduce_sum(tf.math.square(v_loss_x_batch), axis=1)
+        # v_loss_x_batch, x_pred_denorm_batch = self.get_v_loss_x(input_batch, target_snapshot_batch)
+        # loss_x_batch = tf.math.reduce_sum(tf.math.square(v_loss_x_batch), axis=1)
 
         # err_r_batch = self.get_err_r(x_pred_denorm_batch, target_aux_batch)
         # loss_r_batch = self.r_loss_scale(err_r_batch)
 
-        total_loss_x=tf.math.reduce_mean(loss_x_batch)
+        # total_loss_x=tf.math.reduce_mean(loss_x_batch)
         # total_loss_r=tf.math.reduce_mean(loss_r_batch)
 
-        grad_loss = self.get_gradients(trainable_vars, input_batch, target_snapshot_batch)
+        grad_loss, total_loss_x = self.get_gradients(trainable_vars, input_batch, target_snapshot_batch)
+
+        # for i, grad in enumerate(grad_loss):
+        #     grad_loss[i] = grad*0.000001
+            # tf.print(tf.reduce_max(grad_loss[i]))
+            # tf.print(tf.reduce_mean(grad_loss[i]))
+
+        
+
 
         self.optimizer.apply_gradients(zip(grad_loss, trainable_vars))
+        # tf.print(self.optimizer)
 
         # Compute our own metrics
         self.loss_x_tracker.update_state(total_loss_x)
@@ -104,15 +113,21 @@ class S_Farhat_Strategy_KerasModel(keras.Model):
     def test_step(self, data):
         input_batch, (target_snapshot_batch,target_aux_batch) = data
 
-        x_pred_batch = self(input_batch, training=False)
-        x_pred_denorm_batch = self.prepost_processor.postprocess_output_data_tf(x_pred_batch,(input_batch,None))
-        err_x_batch = target_snapshot_batch - x_pred_denorm_batch
-        loss_x_batch = tf.math.reduce_sum(tf.math.square(err_x_batch), axis=1)
+        # x_pred_batch = self(input_batch, training=False)
+        # x_pred_denorm_batch = self.prepost_processor.postprocess_output_data_tf(x_pred_batch,(input_batch,None))
+        # err_x_batch = target_snapshot_batch - x_pred_denorm_batch
+        # loss_x_batch = tf.math.reduce_sum(tf.math.square(err_x_batch), axis=1)
 
         # err_r_batch = self.get_err_r(x_pred_denorm_batch, target_aux_batch)
         # loss_r_batch = self.r_loss_scale(err_r_batch)
 
-        total_loss_x=tf.math.reduce_mean(loss_x_batch)
+        q_target_batch=self.prepost_processor.preprocess_nn_output_data_tf(target_snapshot_batch)
+        q_pred_batch = self(input_batch, training=True)
+        q_error_squared = tf.math.reduce_mean(tf.math.square(q_pred_batch-q_target_batch), axis=1)
+        q_loss = tf.math.reduce_mean(q_error_squared)
+        total_loss_x = q_loss
+
+        # total_loss_x=tf.math.reduce_mean(loss_x_batch)
         # total_loss_r=tf.math.reduce_mean(loss_r_batch)
 
         # Compute our own metrics

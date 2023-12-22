@@ -60,9 +60,14 @@ class S_Only_Strategy_KerasModel(keras.Model):
             tape_d.watch(trainable_vars)
             x_pred_batch = self(input_batch, training=True)
             x_pred_denorm_batch = self.prepost_processor.postprocess_output_data_tf(x_pred_batch, (input_batch,None))
-            v_u_dotprod = tf.math.reduce_sum(tf.math.multiply(v_loss_batch, x_pred_denorm_batch), axis=1)
+            v_u_dotprod = tf.math.reduce_mean(tf.math.multiply(v_loss_batch, x_pred_denorm_batch), axis=1)
             v_u_dotprod_mean = tf.math.reduce_mean(v_u_dotprod)
         grad_loss=tape_d.gradient(v_u_dotprod_mean, trainable_vars)
+        # tf.print(grad_loss[0])
+
+        # v_u_dotprod_mean = v_u_dotprod_mean * 1594
+        
+        # tf.print(grad_loss[0])
 
         return grad_loss
 
@@ -82,15 +87,21 @@ class S_Only_Strategy_KerasModel(keras.Model):
         trainable_vars = self.trainable_variables
 
         v_loss_x_batch, x_pred_denorm_batch = self.get_v_loss_x(input_batch, target_snapshot_batch)
-        loss_x_batch = tf.math.reduce_sum(tf.math.square(v_loss_x_batch), axis=1)
+        loss_x_batch = tf.math.reduce_mean(tf.math.square(v_loss_x_batch), axis=1)
 
-        err_r_batch = self.get_err_r(x_pred_denorm_batch, target_aux_batch)
-        loss_r_batch = self.r_loss_scale(err_r_batch)
+        # err_r_batch = self.get_err_r(x_pred_denorm_batch, target_aux_batch)
+        # loss_r_batch = self.r_loss_scale(err_r_batch)
 
         total_loss_x=tf.math.reduce_mean(loss_x_batch)
-        total_loss_r=tf.math.reduce_mean(loss_r_batch)
+        # total_loss_r=tf.math.reduce_mean(loss_r_batch)
+        total_loss_r=tf.math.reduce_mean(1)
 
         grad_loss = self.get_gradients(trainable_vars, input_batch, v_loss_x_batch)
+
+        # for i, grad in enumerate(grad_loss):
+            # grad_loss[i] = grad*100000000
+            # tf.print(tf.reduce_max(grad_loss[i]))
+            # tf.print(tf.reduce_mean(grad_loss[i]))
 
         self.optimizer.apply_gradients(zip(grad_loss, trainable_vars))
 
@@ -106,13 +117,14 @@ class S_Only_Strategy_KerasModel(keras.Model):
         x_pred_batch = self(input_batch, training=False)
         x_pred_denorm_batch = self.prepost_processor.postprocess_output_data_tf(x_pred_batch,(input_batch,None))
         err_x_batch = target_snapshot_batch - x_pred_denorm_batch
-        loss_x_batch = tf.math.reduce_sum(tf.math.square(err_x_batch), axis=1)
+        loss_x_batch = tf.math.reduce_mean(tf.math.square(err_x_batch), axis=1)
 
-        err_r_batch = self.get_err_r(x_pred_denorm_batch, target_aux_batch)
-        loss_r_batch = self.r_loss_scale(err_r_batch)
+        # err_r_batch = self.get_err_r(x_pred_denorm_batch, target_aux_batch)
+        # loss_r_batch = self.r_loss_scale(err_r_batch)
 
         total_loss_x=tf.math.reduce_mean(loss_x_batch)
-        total_loss_r=tf.math.reduce_mean(loss_r_batch)
+        total_loss_r=tf.math.reduce_mean(1)
+        # total_loss_r=tf.math.reduce_mean(loss_r_batch)
 
         # Compute our own metrics
         self.loss_x_tracker.update_state(total_loss_x)
