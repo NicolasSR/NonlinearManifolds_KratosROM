@@ -27,6 +27,8 @@ class S_Only_Strategy_KerasModel(keras.Model):
             self.r_loss_scale = self.default_loss_scale
 
         self.run_eagerly = False
+        
+        self.rescaling_factor_x=1.0
 
         self.loss_x_tracker = keras.metrics.Mean(name="loss_x")
         self.loss_r_tracker = keras.metrics.Mean(name="loss_r")
@@ -35,12 +37,12 @@ class S_Only_Strategy_KerasModel(keras.Model):
     
     @tf.function
     def default_loss_scale(self, err_r):
-        loss_r = tf.math.reduce_sum(tf.math.square(err_r), axis=1)
+        loss_r = tf.math.reduce_mean(tf.math.square(err_r), axis=1)
         return loss_r
     
     @tf.function
     def log_loss_scale(self, err_r):
-        err_r_quad = tf.math.reduce_sum(tf.math.square(err_r), axis=1)
+        err_r_quad = tf.math.reduce_mean(tf.math.square(err_r), axis=1)
         loss_r = tf.math.log(err_r_quad+1)
         return loss_r
     
@@ -54,7 +56,8 @@ class S_Only_Strategy_KerasModel(keras.Model):
     @tf.function
     def get_gradients(self, trainable_vars, input_batch, v_loss_x_batch):
 
-        v_loss_batch = 2*v_loss_x_batch
+        v_loss_batch = 2*v_loss_x_batch/self.rescaling_factor_x
+        # tf.print(self.rescaling_factor_x)
 
         with tf.GradientTape(persistent=False) as tape_d:
             tape_d.watch(trainable_vars)
@@ -82,6 +85,19 @@ class S_Only_Strategy_KerasModel(keras.Model):
         #     self.sample_gradient_sum_functions_list.append(gradient_sum_sample)
         pass
 
+    def update_rescaling_factors(self, S_true, R_true):
+
+        S_recons_aux1 = self.prepost_processor.preprocess_nn_output_data(S_true)
+        S_recons_aux2, _ =self.prepost_processor.preprocess_input_data(S_true)
+        S_recons = self.prepost_processor.postprocess_output_data(np.zeros(S_recons_aux1.shape), (S_recons_aux2, None))
+
+        # rescaling_factor_x = np.linalg.norm(S_recons-S_true)**2/(S_true.shape[0]*S_true.shape[1])
+        rescaling_factor_x = np.mean(np.square(S_recons-S_true))
+        
+        self.rescaling_factor_x = rescaling_factor_x
+
+        print('Updated gradient rescaling factors. x: ' + str(self.rescaling_factor_x))
+
     def train_step(self,data):
         input_batch, (target_snapshot_batch,target_aux_batch) = data # target_aux is the reference force or residual, depending on the settings
         trainable_vars = self.trainable_variables
@@ -89,19 +105,21 @@ class S_Only_Strategy_KerasModel(keras.Model):
         v_loss_x_batch, x_pred_denorm_batch = self.get_v_loss_x(input_batch, target_snapshot_batch)
         loss_x_batch = tf.math.reduce_mean(tf.math.square(v_loss_x_batch), axis=1)
 
-        # err_r_batch = self.get_err_r(x_pred_denorm_batch, target_aux_batch)
-        # loss_r_batch = self.r_loss_scale(err_r_batch)
+        err_r_batch = self.get_err_r(x_pred_denorm_batch, target_aux_batch)
+        loss_r_batch = self.r_loss_scale(err_r_batch)
 
         total_loss_x=tf.math.reduce_mean(loss_x_batch)
-        # total_loss_r=tf.math.reduce_mean(loss_r_batch)
-        total_loss_r=tf.math.reduce_mean(1)
+        total_loss_r=tf.math.reduce_mean(loss_r_batch)
+        # total_loss_r=tf.math.reduce_mean(1)
 
         grad_loss = self.get_gradients(trainable_vars, input_batch, v_loss_x_batch)
 
         # for i, grad in enumerate(grad_loss):
-            # grad_loss[i] = grad*100000000
-            # tf.print(tf.reduce_max(grad_loss[i]))
-            # tf.print(tf.reduce_mean(grad_loss[i]))
+        #     tf.print(tf.reduce_max(tf.math.abs(grad_loss[i])))
+        #     tf.print(tf.reduce_mean(tf.math.abs(grad_loss[i])))
+        #     tf.print(tf.reduce_min(tf.math.abs(grad_loss[i])))
+        #     tf.print(self.rescaling_factor_x)
+        #     tf.print()
 
         self.optimizer.apply_gradients(zip(grad_loss, trainable_vars))
 
@@ -119,12 +137,12 @@ class S_Only_Strategy_KerasModel(keras.Model):
         err_x_batch = target_snapshot_batch - x_pred_denorm_batch
         loss_x_batch = tf.math.reduce_mean(tf.math.square(err_x_batch), axis=1)
 
-        # err_r_batch = self.get_err_r(x_pred_denorm_batch, target_aux_batch)
-        # loss_r_batch = self.r_loss_scale(err_r_batch)
+        err_r_batch = self.get_err_r(x_pred_denorm_batch, target_aux_batch)
+        loss_r_batch = self.r_loss_scale(err_r_batch)
 
         total_loss_x=tf.math.reduce_mean(loss_x_batch)
-        total_loss_r=tf.math.reduce_mean(1)
-        # total_loss_r=tf.math.reduce_mean(loss_r_batch)
+        total_loss_r=tf.math.reduce_mean(loss_r_batch)
+        # total_loss_r=tf.math.reduce_mean(1)
 
         # Compute our own metrics
         self.loss_x_tracker.update_state(total_loss_x)

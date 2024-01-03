@@ -79,8 +79,15 @@ if __name__ == "__main__":
         # 'saved_models_cantilever_big_range/POD/POD_Emb14',
         # 'Quad/Quad_least_squares_scale_global_Emb6',
         # 'PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[40, 40]_Emb6.20_LRsgdr0.001',
-        'saved_models_cantilever_big_range/PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb6.60_LRsgdr0.001'
-        # 'saved_models_cantilever_big_range/POD/POD_Emb6'
+        # 'saved_models_cantilever_big_range/PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb6.60_LRsgdr0.001'
+        'saved_models_cantilever_big_range/POD/POD_Emb6',
+        'saved_models_cantilever_big_range/POD/POD_Emb8',
+        'saved_models_cantilever_big_range/POD/POD_Emb10',
+        'saved_models_cantilever_big_range/POD/POD_Emb12',
+        'saved_models_cantilever_big_range/POD/POD_Emb14',
+        'saved_models_cantilever_big_range/POD/POD_Emb16',
+        'saved_models_cantilever_big_range/POD/POD_Emb18',
+        'saved_models_cantilever_big_range/POD/POD_Emb20'
     ]
 
     # reference_snapshots_filename='datasets_two_forces_dense_extended/S_mu_dataset_300.npy'
@@ -108,10 +115,10 @@ if __name__ == "__main__":
         print('Error norms')
         calculate_X_norm_error(S_fom, S_rom)
 
-        # plot_rel_l2_errors(S_fom, S_rom)
+        plot_rel_l2_errors(S_fom, S_rom)
 
-        # draw_x_error_abs_image(S_fom, S_rom)
-        # draw_x_error_rel_image(S_fom, S_rom)
+        draw_x_error_abs_image(S_fom, S_rom)
+        draw_x_error_rel_image(S_fom, S_rom)
 
 
         print('======= Getting reactions matrix =======')

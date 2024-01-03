@@ -130,16 +130,12 @@ class NMROM_POD_Simulator():
 
             mu_steps=np.expand_dims(np.linalg.norm(mu, axis=1)//10,axis=1)
             #### THIS IS ONLY FOR THE CANTILEVER LARGE RANGE CASE
-            mu_steps[115,0]=np.linalg.norm(mu[115])//1
-            mu_steps[169,0]=np.linalg.norm(mu[169])//1
-            mu_steps[277,0]=np.linalg.norm(mu[277])//1
             mu_steps[49,0]=np.linalg.norm(mu[49])//1
             mu_steps[211,0]=np.linalg.norm(mu[211])//1
             #### 
 
             mu=np.concatenate([mu,mu_steps], axis=1)
             return mu
-            # return mu[[211]]
         
         def UpdateProjectParametersRandom(parameters, mu=None):
             """

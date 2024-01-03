@@ -166,8 +166,8 @@ if __name__ == "__main__":
 #         "dataset_path": 'datasets_rubber_hyperelastic_cantilever_big_range/',
 #         "models_path_root": 'saved_models_cantilever_big_range/',
 #         "project_parameters_file":'ProjectParameters_tf.json'
-#    },
-#     {
+#    }
+#    {
 #         "sim_type": 'fluid',
 #         "name": None,
 #         "architecture": {
@@ -196,20 +196,22 @@ if __name__ == "__main__":
 #    },
    {
         "sim_type": 'structural',
-        "name": 'PODANN/test_sonly_gradients_adamw_20.60',
+        "name": 'PODANN/test_gradient_rescalings',
         "architecture": {
             "name": 'PODANN', # ['POD','Quad','PODANN]
-            "q_inf_size": 20,
+            "q_inf_size": 6,
             "q_sup_size": 60,
             "hidden_layers": [200,200],
             "prepost_process": 'svd_white_nostand',
             "opt_strategy": {
-                "name": 'tf_sonly', # ['tf_sonly', 'tf_ronly', 'tf_srmixed', 'tf_wonly']
+                "name": 'tf_sfarhat', # ['tf_sonly', 'tf_ronly', 'tf_srmixed', 'tf_wonly']
                 "r_loss_type": 'diff',  # ['norm, 'diff']
                 "r_loss_log_scale": False,
                 "learning_rate": ('sgdr', 0.001, 1e-6, 200, 10), # ('steps', 0.001, 10, 1e-6, 100), ('const', 0.001), ('tri2', 0.001, 1e-6, 250)
                 "batch_size": 16,
-                "epochs": 800
+                "epochs": 800,
+                # "wx": ('const', 0.01),
+                # "wr": ('const', 0.99)
             },
             # "finetune_from": 'saved_models_cantilever_big_range/PODANN/GOOD_sonly_6.60/',
             "finetune_from": None,

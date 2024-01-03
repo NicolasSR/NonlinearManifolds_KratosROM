@@ -33,6 +33,9 @@ class S_R_Mixed_Strategy_KerasModel(keras.Model):
             self.r_loss_scale = self.default_loss_scale
 
         self.run_eagerly = False
+        
+        self.rescaling_factor_x = 1.0
+        self.rescaling_factor_r = 1.0
 
         self.loss_x_tracker = keras.metrics.Mean(name="loss_x")
         self.loss_r_tracker = keras.metrics.Mean(name="loss_r")
@@ -41,12 +44,12 @@ class S_R_Mixed_Strategy_KerasModel(keras.Model):
     
     @tf.function
     def default_loss_scale(self, err_r, v_loss_r=None):
-        loss_r = tf.math.reduce_sum(tf.math.square(err_r), axis=1)
+        loss_r = tf.math.reduce_mean(tf.math.square(err_r), axis=1)
         return loss_r, v_loss_r
     
     @tf.function
     def log_loss_scale(self, err_r, v_loss_r=None):
-        err_r_quad = tf.math.reduce_sum(tf.math.square(err_r), axis=1)
+        err_r_quad = tf.math.reduce_mean(tf.math.square(err_r), axis=1)
         loss_r = tf.math.log(err_r_quad+1)
         if v_loss_r is not None:
             v_loss_r=tf.transpose(tf.transpose(v_loss_r)/(err_r_quad+1))
@@ -55,21 +58,20 @@ class S_R_Mixed_Strategy_KerasModel(keras.Model):
     @tf.function
     def get_v_loss_x(self, input, target_snapshot):
         x_pred = self(input, training=True)
-        x_pred_denorm = self.prepost_processor.postprocess_output_data_tf(x_pred, input)
+        x_pred_denorm = self.prepost_processor.postprocess_output_data_tf(x_pred, (input,None))
         v_loss_x = x_pred_denorm - target_snapshot  # We get the loss on the error for the denormalised snapshot
-
         return v_loss_x, x_pred_denorm
     
     @tf.function
     def get_gradients(self, trainable_vars, input, v_loss_x, v_loss_r, w_x, w_r):
 
-        v_loss = 2*(w_x*v_loss_x+w_r*v_loss_r)
+        v_loss = 2*(w_x*v_loss_x/self.rescaling_factor_x+w_r*v_loss_r/self.rescaling_factor_r)
 
         with tf.GradientTape(persistent=False) as tape_d:
             tape_d.watch(trainable_vars)
             x_pred = self(input, training=True)
-            x_pred_denorm = self.prepost_processor.postprocess_output_data_tf(x_pred, input)
-            v_u_dotprod = tf.math.reduce_sum(tf.math.multiply(v_loss, x_pred_denorm), axis=1)
+            x_pred_denorm = self.prepost_processor.postprocess_output_data_tf(x_pred, (input, None))
+            v_u_dotprod = tf.math.reduce_mean(tf.math.multiply(v_loss, x_pred_denorm), axis=1)
             v_u_dotprod_mean = tf.math.reduce_mean(v_u_dotprod)
         grad_loss=tape_d.gradient(v_u_dotprod_mean, trainable_vars)
 
@@ -86,12 +88,28 @@ class S_R_Mixed_Strategy_KerasModel(keras.Model):
         #     self.sample_gradient_sum_functions_list.append(gradient_sum_sample)
         pass
 
+    def update_rescaling_factors(self, S_true, R_true):
+
+        S_recons_aux1 = self.prepost_processor.preprocess_nn_output_data(S_true)
+        S_recons_aux2, _ =self.prepost_processor.preprocess_input_data(S_true)
+        S_recons = self.prepost_processor.postprocess_output_data(np.zeros(S_recons_aux1.shape), (S_recons_aux2, None))
+
+        rescaling_factor_x = np.mean(np.square(S_recons-S_true))
+        
+        err_r_batch, _ = self.get_v_loss_r(tf.constant(S_recons), tf.constant(R_true))
+        rescaling_factor_r = np.mean(np.square(err_r_batch.numpy()))
+
+        self.rescaling_factor_x = rescaling_factor_x
+        self.rescaling_factor_r = rescaling_factor_r
+
+        print('Updated gradient rescaling factors. x: ' + str(self.rescaling_factor_x) + ', r: ' + str(self.rescaling_factor_r))
+
     def train_step(self,data):
         input_batch, (target_snapshot_batch,target_aux_batch) = data # target_aux is the reference force or residual, depending on the settings
         trainable_vars = self.trainable_variables
 
         v_loss_x_batch, x_pred_denorm_batch = self.get_v_loss_x(input_batch, target_snapshot_batch)
-        loss_x_batch = tf.math.reduce_sum(tf.math.square(v_loss_x_batch), axis=1)
+        loss_x_batch = tf.math.reduce_mean(tf.math.square(v_loss_x_batch), axis=1)
 
         err_r_batch, v_loss_r_batch = self.get_v_loss_r(x_pred_denorm_batch,target_aux_batch)
         loss_r_batch, v_loss_r_batch = self.r_loss_scale(err_r_batch, v_loss_r_batch)
@@ -100,6 +118,13 @@ class S_R_Mixed_Strategy_KerasModel(keras.Model):
         total_loss_r=tf.math.reduce_mean(loss_r_batch)
 
         grad_loss = self.get_gradients(trainable_vars, input_batch, v_loss_x_batch, v_loss_r_batch, self.wx, self.wr)
+        
+        # for i, grad in enumerate(grad_loss):
+        #     tf.print()
+        #     tf.print(tf.reduce_max(tf.math.abs(grad_loss[i])))
+        #     tf.print(tf.reduce_mean(tf.math.abs(grad_loss[i])))
+        #     tf.print(tf.reduce_min(tf.math.abs(grad_loss[i])))
+        #     tf.print(self.rescaling_factor_r)
 
         self.optimizer.apply_gradients(zip(grad_loss, trainable_vars))
 
@@ -113,9 +138,9 @@ class S_R_Mixed_Strategy_KerasModel(keras.Model):
         input_batch, (target_snapshot_batch,target_aux_batch) = data
 
         x_pred_batch = self(input_batch, training=False)
-        x_pred_denorm_batch = self.prepost_processor.postprocess_output_data_tf(x_pred_batch,input_batch)
+        x_pred_denorm_batch = self.prepost_processor.postprocess_output_data_tf(x_pred_batch, (input_batch, None))
         err_x_batch = target_snapshot_batch - x_pred_denorm_batch
-        loss_x_batch = tf.math.reduce_sum(tf.math.square(err_x_batch), axis=1)
+        loss_x_batch = tf.math.reduce_mean(tf.math.square(err_x_batch), axis=1)
         
         err_r_batch = self.get_err_r(x_pred_denorm_batch, target_aux_batch)
         loss_r_batch, _ = self.r_loss_scale(err_r_batch)

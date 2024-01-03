@@ -76,6 +76,10 @@ def plot_s_error(model_info_list):
     PODANN_rLoss_nmrom = []
     PODANN_rLoss_q = []
 
+    PODANN_rLoss_fine_recons = []
+    PODANN_rLoss_fine_nmrom = []
+    PODANN_rLoss_fine_q = []
+
     POD_recons = []
     POD_nmrom = []
     POD_q = []
@@ -85,6 +89,10 @@ def plot_s_error(model_info_list):
             PODANN_rLoss_recons.append(model_info.recons_s_frobErr)
             PODANN_rLoss_nmrom.append(model_info.nmrom_s_frobErr)
             PODANN_rLoss_q.append(model_info.q_inf)
+        elif model_info.label=="rLoss_finetuned":
+            PODANN_rLoss_fine_recons.append(model_info.recons_s_frobErr)
+            PODANN_rLoss_fine_nmrom.append(model_info.nmrom_s_frobErr)
+            PODANN_rLoss_fine_q.append(model_info.q_inf)
         elif model_info.label=="sLoss":
             PODANN_sLoss_recons.append(model_info.recons_s_frobErr)
             PODANN_sLoss_nmrom.append(model_info.nmrom_s_frobErr)
@@ -100,6 +108,8 @@ def plot_s_error(model_info_list):
     plt.plot(PODANN_sLoss_q, PODANN_sLoss_nmrom, '-b', marker='+', markersize=4, label='sLoss NMROM')
     plt.plot(PODANN_rLoss_q, PODANN_rLoss_recons, '--r', marker='*', markersize=4, label='rLoss Proj.')
     plt.plot(PODANN_rLoss_q, PODANN_rLoss_nmrom, '-r', marker='2', markersize=4, label='rLoss NMROM')
+    plt.plot(PODANN_rLoss_fine_q, PODANN_rLoss_fine_recons, '--k', marker='*', markersize=4, label='rLoss_fine Proj.')
+    plt.plot(PODANN_rLoss_fine_q, PODANN_rLoss_fine_nmrom, '-k', marker='2', markersize=4, label='rLoss_fine NMROM')
     plt.plot(POD_q, POD_recons, '--g', marker='D', markersize=4, label='POD Proj.')
     plt.plot(POD_q, POD_nmrom, '-g', marker='X', markersize=4, label='POD NMROM')
 
@@ -150,6 +160,10 @@ def plot_rNoRorce_error(model_info_list):
     PODANN_rLoss_recons = []
     PODANN_rLoss_nmrom = []
     PODANN_rLoss_q = []
+    
+    PODANN_rLoss_fine_recons = []
+    PODANN_rLoss_fine_nmrom = []
+    PODANN_rLoss_fine_q = []
 
     POD_recons = []
     POD_nmrom = []
@@ -160,6 +174,10 @@ def plot_rNoRorce_error(model_info_list):
             PODANN_rLoss_recons.append(model_info.recons_rNoForce_frobErr)
             PODANN_rLoss_nmrom.append(model_info.nmrom_rNoForce_frobErr)
             PODANN_rLoss_q.append(model_info.q_inf)
+        elif model_info.label=="rLoss_finetuned":
+            PODANN_rLoss_fine_recons.append(model_info.recons_rNoForce_frobErr)
+            PODANN_rLoss_fine_nmrom.append(model_info.nmrom_rNoForce_frobErr)
+            PODANN_rLoss_fine_q.append(model_info.q_inf)
         elif model_info.label=="sLoss":
             PODANN_sLoss_recons.append(model_info.recons_rNoForce_frobErr)
             PODANN_sLoss_nmrom.append(model_info.nmrom_rNoForce_frobErr)
@@ -175,6 +193,8 @@ def plot_rNoRorce_error(model_info_list):
     plt.plot(PODANN_sLoss_q, PODANN_sLoss_nmrom, '-b', marker='+', markersize=4, label='sLoss NMROM')
     plt.plot(PODANN_rLoss_q, PODANN_rLoss_recons, '--r', marker='*', markersize=4, label='rLoss Proj.')
     plt.plot(PODANN_rLoss_q, PODANN_rLoss_nmrom, '-r', marker='2', markersize=4, label='rLoss NMROM')
+    plt.plot(PODANN_rLoss_fine_q, PODANN_rLoss_fine_recons, '--k', marker='*', markersize=4, label='rLoss_fine Proj.')
+    plt.plot(PODANN_rLoss_fine_q, PODANN_rLoss_fine_nmrom, '-k', marker='2', markersize=4, label='rLoss_fine NMROM')
     plt.plot(POD_q, POD_recons, '--g', marker='D', markersize=4, label='POD Proj.')
     plt.plot(POD_q, POD_nmrom, '-g', marker='X', markersize=4, label='POD NMROM')
 
@@ -224,6 +244,10 @@ def plot_rRorce_error(model_info_list):
     PODANN_rLoss_nmrom = []
     PODANN_rLoss_q = []
 
+    PODANN_rLoss_fine_recons = []
+    PODANN_rLoss_fine_nmrom = []
+    PODANN_rLoss_fine_q = []
+
     POD_recons = []
     POD_nmrom = []
     POD_q = []
@@ -233,6 +257,10 @@ def plot_rRorce_error(model_info_list):
             PODANN_rLoss_recons.append(model_info.recons_rForce_frobErr)
             PODANN_rLoss_nmrom.append(model_info.nmrom_rForce_frobErr)
             PODANN_rLoss_q.append(model_info.q_inf)
+        if model_info.label=="rLoss_fine":
+            PODANN_rLoss_fine_recons.append(model_info.recons_rForce_frobErr)
+            PODANN_rLoss_fine_nmrom.append(model_info.nmrom_rForce_frobErr)
+            PODANN_rLoss_fine_q.append(model_info.q_inf)
         elif model_info.label=="sLoss":
             PODANN_sLoss_recons.append(model_info.recons_rForce_frobErr)
             PODANN_sLoss_nmrom.append(model_info.nmrom_rForce_frobErr)
@@ -248,6 +276,8 @@ def plot_rRorce_error(model_info_list):
     plt.plot(PODANN_sLoss_q, PODANN_sLoss_nmrom, '-b', marker='+', markersize=4, label='sLoss NMROM')
     plt.plot(PODANN_rLoss_q, PODANN_rLoss_recons, '--r', marker='*', markersize=4, label='rLoss Proj.')
     plt.plot(PODANN_rLoss_q, PODANN_rLoss_nmrom, '-r', marker='2', markersize=4, label='rLoss NMROM')
+    plt.plot(PODANN_rLoss_fine_q, PODANN_rLoss_fine_recons, '--k', marker='*', markersize=4, label='rLoss_fine Proj.')
+    plt.plot(PODANN_rLoss_fine_q, PODANN_rLoss_fine_nmrom, '-k', marker='2', markersize=4, label='rLoss_fine NMROM')
     plt.plot(POD_q, POD_recons, '--g', marker='D', markersize=4, label='POD Proj.')
     plt.plot(POD_q, POD_nmrom, '-g', marker='X', markersize=4, label='POD NMROM')
 
@@ -361,10 +391,42 @@ if __name__=="__main__":
         "label": 'rLoss',
         "q_inf": 20
      },{
+        "model_path": 'PODANN/PODANN_tf_ronly_Cont_diff_svd_white_nostand_Lay[200, 200]_Emb6.60_LRsgdr0.0001/',
+        "label": 'rLoss_finetuned',
+        "q_inf": 6
+     },{
+        "model_path": 'PODANN/PODANN_tf_ronly_Cont_diff_svd_white_nostand_Lay[200, 200]_Emb8.60_LRsgdr0.0001/',
+        "label": 'rLoss_finetuned',
+        "q_inf": 8
+     },{
+        "model_path": 'PODANN/PODANN_tf_ronly_Cont_diff_svd_white_nostand_Lay[200, 200]_Emb10.60_LRsgdr0.0001/',
+        "label": 'rLoss_finetuned',
+        "q_inf": 10
+     },{
+        "model_path": 'PODANN/PODANN_tf_ronly_Cont_diff_svd_white_nostand_Lay[200, 200]_Emb12.60_LRsgdr0.0001/',
+        "label": 'rLoss_finetuned',
+        "q_inf": 12
+     },{
+        "model_path": 'PODANN/PODANN_tf_ronly_Cont_diff_svd_white_nostand_Lay[200, 200]_Emb14.60_LRsgdr0.0001/',
+        "label": 'rLoss_finetuned',
+        "q_inf": 14
+     },{
+        "model_path": 'PODANN/PODANN_tf_ronly_Cont_diff_svd_white_nostand_Lay[200, 200]_Emb16.60_LRsgdr0.0001/',
+        "label": 'rLoss_finetuned',
+        "q_inf": 16
+     },{
+        "model_path": 'PODANN/PODANN_tf_ronly_Cont_diff_svd_white_nostand_Lay[200, 200]_Emb18.60_LRsgdr0.0001/',
+        "label": 'rLoss_finetuned',
+        "q_inf": 18
+     },{
+        "model_path": 'PODANN/PODANN_tf_ronly_Cont_diff_svd_white_nostand_Lay[200, 200]_Emb20.60_LRsgdr0.0001/',
+        "label": 'rLoss_finetuned',
+        "q_inf": 20
+     },{
         "model_path": 'PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb6.60_LRsgdr0.001/',
         "label": 'sLoss',
         "q_inf": 6
-    },{
+     },{
         "model_path": 'PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb8.60_LRsgdr0.001/',
         "label": 'sLoss',
         "q_inf": 8

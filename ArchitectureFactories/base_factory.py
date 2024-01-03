@@ -127,6 +127,9 @@ class Base_Architecture_Factory(abc.ABC):
         # Train the model
 
         # early_stop_callback = tf.keras.callbacks.EarlyStopping(monitor='val_loss_r', patience=5)
+        
+        model.update_rescaling_factors(target_data[0], target_data[1])
+
         checkpoint_best_x_callback = tf.keras.callbacks.ModelCheckpoint(self.model_path+"best/weights_x_{epoch:03d}.h5",save_weights_only=True,save_best_only=True,monitor="val_loss_x",mode="min")
         checkpoint_best_r_callback = tf.keras.callbacks.ModelCheckpoint(self.model_path+"best/weights_r_{epoch:03d}.h5",save_weights_only=True,save_best_only=True,monitor="val_loss_r",mode="min")
         checkpoint_last_callback = tf.keras.callbacks.ModelCheckpoint(self.model_path+"last/weights.h5",save_weights_only=True,save_freq="epoch")

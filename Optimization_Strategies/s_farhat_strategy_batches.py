@@ -76,6 +76,20 @@ class S_Farhat_Strategy_KerasModel(keras.Model):
         #     self.sample_gradient_sum_functions_list.append(gradient_sum_sample)
         pass
 
+    def update_rescaling_factors(self, S_true, R_true):
+
+        # S_recons_aux1 = self.prepost_processor.preprocess_nn_output_data(S_true)
+        # S_recons_aux2, _ =self.prepost_processor.preprocess_input_data(S_true)
+        # S_recons = self.prepost_processor.postprocess_output_data(np.zeros(S_recons_aux1.shape), (S_recons_aux2, None))
+
+        # # rescaling_factor_x = np.linalg.norm(S_recons-S_true)**2/(S_true.shape[0]*S_true.shape[1])
+        # rescaling_factor_x = np.mean(np.square(S_recons-S_true))
+        
+        # self.rescaling_factor_x = rescaling_factor_x
+
+        # print('Updated gradient rescaling factors. x: ' + str(self.rescaling_factor_x))
+        pass
+
     def train_step(self,data):
         input_batch, (target_snapshot_batch,target_aux_batch) = data # target_aux is the reference force or residual, depending on the settings
         trainable_vars = self.trainable_variables
@@ -92,13 +106,12 @@ class S_Farhat_Strategy_KerasModel(keras.Model):
 
         grad_loss, total_loss_x = self.get_gradients(trainable_vars, input_batch, target_snapshot_batch)
 
-        # for i, grad in enumerate(grad_loss):
-        #     grad_loss[i] = grad*0.000001
-            # tf.print(tf.reduce_max(grad_loss[i]))
-            # tf.print(tf.reduce_mean(grad_loss[i]))
-
-        
-
+        for i, grad in enumerate(grad_loss):
+            tf.print(tf.reduce_max(tf.math.abs(grad_loss[i])))
+            tf.print(tf.reduce_mean(tf.math.abs(grad_loss[i])))
+            tf.print(tf.reduce_min(tf.math.abs(grad_loss[i])))
+            # tf.print(self.rescaling_factor_x)
+            tf.print()
 
         self.optimizer.apply_gradients(zip(grad_loss, trainable_vars))
         # tf.print(self.optimizer)
