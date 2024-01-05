@@ -86,6 +86,34 @@ class SVD_White_NoStand_PODANN_PrePostProcessor(Base_PrePostProcessor):
         # print('Reconstruction error SVD (Mean L2): ', np.sum(err_aux)/S.shape[0])
         print('Reconstruction error SVD (Mean L2): ', np.exp(np.sum(np.log(err_aux))/S.shape[0]))
 
+    def configure_processor_non_saved(self, S, svd_inf_size, svd_sup_size, crop_mat_tf, crop_mat_scp):
+        print('Applying SVD-whitening without prior standartization for PODANN architecture. Forced to calculate projection operators.')
+
+        S_scaled=S/np.sqrt(S.shape[0])
+        self.phi,self.sigma, _ = np.linalg.svd(S_scaled.T)
+
+        self.phi_inf=self.phi[:,:svd_inf_size].copy()
+        self.sigma_inf=self.sigma[:svd_inf_size].copy()
+        self.phi_sup=self.phi[:,svd_inf_size:svd_sup_size].copy()
+        self.sigma_sup=self.sigma[svd_inf_size:svd_sup_size].copy()
+        print('Phi_inf matrix shape: ', self.phi_inf.shape)
+        print('Sigma_inf array shape: ', self.sigma_inf.shape)
+        print('Phi_sgs matrix shape: ', self.phi_sup.shape)
+        print('Sigma_sgs array shape: ', self.sigma_sup.shape)
+        self.phi_inf_tf=tf.constant(self.phi_inf)
+        self.sigma_inf_tf=tf.constant(self.sigma_inf)
+        self.phi_sup_tf=tf.constant(self.phi_sup)
+        self.sigma_sup_tf=tf.constant(self.sigma_sup)
+
+        ## Check reconstruction error
+        S_recons_aux1=self.preprocess_nn_output_data(S)
+        S_recons_aux2, _ =self.preprocess_input_data(S)
+        S_recons = self.postprocess_output_data(S_recons_aux1, (S_recons_aux2, None))
+        print('Reconstruction error SVD (Frob): ', np.linalg.norm(S_recons-S)/np.linalg.norm(S))
+        err_aux=np.linalg.norm(S-S_recons, ord=2, axis=1)/np.linalg.norm(S, ord=2, axis=1)
+        # print('Reconstruction error SVD (Mean L2): ', np.sum(err_aux)/S.shape[0])
+        print('Reconstruction error SVD (Mean L2): ', np.exp(np.sum(np.log(err_aux))/S.shape[0]))
+
     def preprocess_nn_output_data(self, snapshot):
         # Returns q_sup from input snapshots
         output_data=snapshot.copy()

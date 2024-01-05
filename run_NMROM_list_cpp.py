@@ -15,47 +15,17 @@ def simulate(working_path, sim_config):
 
 if __name__ == "__main__":
     sim_configs_list=[
+   {
+        "model_path": 'saved_models_cantilever_big_range/PODANN/PODANN_tf_ronly_Cont_diff_svd_white_nostand_Lay[200, 200]_Emb14.60_LRsgdr0.0001',
+        "projection_strategy": 'custom', # ['custom', 'pod']
+        "parameters_selection_strategy": 'random', # ['progressive', 'random']
+        "best": 'r'
+   },
 #    {
-#         "model_path": 'saved_models_cantilever_big_range/PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb8.60_LRsgdr0.001',
-#         "projection_strategy": 'custom', # ['custom', 'pod']
+#         "model_path": 'saved_models_cantilever_big_range/POD/POD_Emb8',
+#         "projection_strategy": 'pod', # ['custom', 'pod']
 #         "parameters_selection_strategy": 'random', # ['progressive', 'random']
-#         "best": 'x'
-#    },
-   {
-        "model_path": 'saved_models_cantilever_big_range/POD/POD_Emb8',
-        "projection_strategy": 'pod', # ['custom', 'pod']
-        "parameters_selection_strategy": 'random', # ['progressive', 'random']
-   },
-   {
-        "model_path": 'saved_models_cantilever_big_range/POD/POD_Emb10',
-        "projection_strategy": 'pod', # ['custom', 'pod']
-        "parameters_selection_strategy": 'random', # ['progressive', 'random']
-   },
-   {
-        "model_path": 'saved_models_cantilever_big_range/POD/POD_Emb12',
-        "projection_strategy": 'pod', # ['custom', 'pod']
-        "parameters_selection_strategy": 'random', # ['progressive', 'random']
-   },
-   {
-        "model_path": 'saved_models_cantilever_big_range/POD/POD_Emb14',
-        "projection_strategy": 'pod', # ['custom', 'pod']
-        "parameters_selection_strategy": 'random', # ['progressive', 'random']
-   },
-   {
-        "model_path": 'saved_models_cantilever_big_range/POD/POD_Emb16',
-        "projection_strategy": 'pod', # ['custom', 'pod']
-        "parameters_selection_strategy": 'random', # ['progressive', 'random']
-   },
-   {
-        "model_path": 'saved_models_cantilever_big_range/POD/POD_Emb18',
-        "projection_strategy": 'pod', # ['custom', 'pod']
-        "parameters_selection_strategy": 'random', # ['progressive', 'random']
-   },
-   {
-        "model_path": 'saved_models_cantilever_big_range/POD/POD_Emb20',
-        "projection_strategy": 'pod', # ['custom', 'pod']
-        "parameters_selection_strategy": 'random', # ['progressive', 'random']
-   }
+#    }
    ]
     
     parser = argparse.ArgumentParser()

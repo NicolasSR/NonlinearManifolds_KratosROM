@@ -26,9 +26,9 @@ class Model_Info:
         self.recons_rForce_frobErr = None
         self.recons_rNoForce_frobErr = None
 
-        if "tf_ronly" in model_path:
+        if "tf_ronly" in model_path or "tf_srmixed" in model_path:
             best_type_decorator = '_bestr_'
-        elif "tf_sonly" in model_path:
+        elif "tf_sonly" in model_path or "tf_sfarhat" in model_path:
             best_type_decorator = '_bestx_'
         else:
             best_type_decorator = ''
@@ -64,18 +64,18 @@ def plot_s_error(model_info_list):
         if model_info.label=="5000":
             PODANN_5000_recons.append(model_info.recons_s_frobErr)
             PODANN_5000_q.append(model_info.q_inf)
-        elif model_info.label=="1000":
+        elif model_info.label=="farhat":
             PODANN_1000_recons.append(model_info.recons_s_frobErr)
             PODANN_1000_q.append(model_info.q_inf)
-        elif model_info.label=="500":
+        elif model_info.label=="POD":
             PODANN_500_recons.append(model_info.recons_s_frobErr)
             PODANN_500_q.append(model_info.q_inf)
 
     fig = plt.figure()
 
-    plt.plot(PODANN_5000_q, PODANN_5000_recons, '--b', marker='o', markersize=4, label='5000 samp. Proj.')
-    plt.plot(PODANN_1000_q, PODANN_1000_recons, '--r', marker='*', markersize=4, label='1000 samp. Proj.')
-    plt.plot(PODANN_500_q, PODANN_500_recons, '--g', marker='D', markersize=4, label='500 samp. Proj.')
+    plt.plot(PODANN_5000_q, PODANN_5000_recons, '-b', marker='o', markersize=4, label='sLoss')
+    plt.plot(PODANN_1000_q, PODANN_1000_recons, '-r', marker='*', markersize=4, label='qLoss')
+    plt.plot(PODANN_500_q, PODANN_500_recons, '-g', marker='D', markersize=4, label='POD')
 
     plt.semilogy()
 
@@ -104,18 +104,18 @@ def plot_rNoRorce_error(model_info_list):
         if model_info.label=="5000":
             PODANN_5000_recons.append(model_info.recons_rNoForce_frobErr)
             PODANN_5000_q.append(model_info.q_inf)
-        elif model_info.label=="1000":
+        elif model_info.label=="farhat":
             PODANN_1000_recons.append(model_info.recons_rNoForce_frobErr)
             PODANN_1000_q.append(model_info.q_inf)
-        elif model_info.label=="500":
+        elif model_info.label=="POD":
             PODANN_500_recons.append(model_info.recons_rNoForce_frobErr)
             PODANN_500_q.append(model_info.q_inf)
 
     fig = plt.figure()
     
-    plt.plot(PODANN_5000_q, PODANN_5000_recons, '--b', marker='o', markersize=4, label='5000 samp. Proj.')
-    plt.plot(PODANN_1000_q, PODANN_1000_recons, '--r', marker='*', markersize=4, label='1000 samp. Proj.')
-    plt.plot(PODANN_500_q, PODANN_500_recons, '--g', marker='D', markersize=4, label='500 samp. Proj.')
+    plt.plot(PODANN_5000_q, PODANN_5000_recons, '-b', marker='o', markersize=4, label='sLoss')
+    plt.plot(PODANN_1000_q, PODANN_1000_recons, '-r', marker='*', markersize=4, label='qLoss')
+    plt.plot(PODANN_500_q, PODANN_500_recons, '-g', marker='D', markersize=4, label='POD')
 
     plt.semilogy()
 
@@ -142,18 +142,18 @@ def plot_rRorce_error(model_info_list):
         if model_info.label=="5000":
             PODANN_5000_recons.append(model_info.recons_rForce_frobErr)
             PODANN_5000_q.append(model_info.q_inf)
-        elif model_info.label=="1000":
+        elif model_info.label=="farhat":
             PODANN_1000_recons.append(model_info.recons_rForce_frobErr)
             PODANN_1000_q.append(model_info.q_inf)
-        elif model_info.label=="500":
+        elif model_info.label=="POD":
             PODANN_500_recons.append(model_info.recons_rForce_frobErr)
             PODANN_500_q.append(model_info.q_inf)
 
     fig = plt.figure()
 
-    plt.plot(PODANN_5000_q, PODANN_5000_recons, '--b', marker='o', markersize=4, label='5000 samp. Proj.')
-    plt.plot(PODANN_1000_q, PODANN_1000_recons, '--r', marker='*', markersize=4, label='1000 samp. Proj.')
-    plt.plot(PODANN_500_q, PODANN_500_recons, '--g', marker='D', markersize=4, label='500 samp. Proj.')
+    plt.plot(PODANN_5000_q, PODANN_5000_recons, '-b', marker='o', markersize=4, label='sLoss')
+    plt.plot(PODANN_1000_q, PODANN_1000_recons, '-r', marker='*', markersize=4, label='qLoss')
+    plt.plot(PODANN_500_q, PODANN_500_recons, '-g', marker='D', markersize=4, label='POD')
 
     plt.semilogy()
 
@@ -277,6 +277,22 @@ if __name__=="__main__":
         "label": '500',
         "q_inf": 6
      },{
+        "model_path": 'PODANN/PODANN_tf_srmixed_0.1-0.9_diff_svd_white_nostand_Lay[200, 200]_Emb6.60_LRsgdr0.001/',
+        "label": '0.9',
+        "q_inf": 6
+     },{
+        "model_path": 'PODANN/PODANN_tf_srmixed_0.5-0.5_diff_svd_white_nostand_Lay[200, 200]_Emb6.60_LRsgdr0.001/',
+        "label": '0.5',
+        "q_inf": 6
+     },{
+        "model_path": 'PODANN/PODANN_tf_sfarhat_diff_svd_Lay[200, 200]_Emb6.60_LRsgdr0.001/',
+        "label": 'farhat',
+        "q_inf": 6
+     },{
+        "model_path": 'POD/POD_Emb6/',
+        "label": 'POD',
+        "q_inf": 6
+     },{
         "model_path": 'PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb8.60_LRsgdr0.001/',
         "label": '5000',
         "q_inf": 8
@@ -287,6 +303,14 @@ if __name__=="__main__":
      },{
         "model_path": 'PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb8.60_LRsgdr0.001_500samples/',
         "label": '500',
+        "q_inf": 8
+     },{
+        "model_path": 'PODANN/PODANN_tf_sfarhat_diff_svd_Lay[200, 200]_Emb8.60_LRsgdr0.001/',
+        "label": 'farhat',
+        "q_inf": 8
+     },{
+        "model_path": 'POD/POD_Emb8/',
+        "label": 'POD',
         "q_inf": 8
      },{
         "model_path": 'PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb10.60_LRsgdr0.001/',
@@ -301,6 +325,14 @@ if __name__=="__main__":
         "label": '500',
         "q_inf": 10
      },{
+        "model_path": 'PODANN/PODANN_tf_sfarhat_diff_svd_Lay[200, 200]_Emb10.60_LRsgdr0.001/',
+        "label": 'farhat',
+        "q_inf": 10
+     },{
+        "model_path": 'POD/POD_Emb10/',
+        "label": 'POD',
+        "q_inf": 10
+     },{
         "model_path": 'PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb12.60_LRsgdr0.001/',
         "label": '5000',
         "q_inf": 12
@@ -311,6 +343,14 @@ if __name__=="__main__":
      },{
         "model_path": 'PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb12.60_LRsgdr0.001_500samples/',
         "label": '500',
+        "q_inf": 12
+     },{
+        "model_path": 'PODANN/PODANN_tf_sfarhat_diff_svd_Lay[200, 200]_Emb12.60_LRsgdr0.001/',
+        "label": 'farhat',
+        "q_inf": 12
+     },{
+        "model_path": 'POD/POD_Emb12/',
+        "label": 'POD',
         "q_inf": 12
      },{
         "model_path": 'PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb14.60_LRsgdr0.001/',
@@ -325,6 +365,18 @@ if __name__=="__main__":
         "label": '500',
         "q_inf": 14
      },{
+        "model_path": 'PODANN/PODANN_tf_srmixed_0.1-0.9_diff_svd_white_nostand_Lay[200, 200]_Emb14.60_LRsgdr0.001/',
+        "label": '0.9',
+        "q_inf": 14
+     },{
+        "model_path": 'PODANN/PODANN_tf_sfarhat_diff_svd_Lay[200, 200]_Emb14.60_LRsgdr0.001/',
+        "label": 'farhat',
+        "q_inf": 14
+     },{
+        "model_path": 'POD/POD_Emb14/',
+        "label": 'POD',
+        "q_inf": 14
+     },{
         "model_path": 'PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb16.60_LRsgdr0.001/',
         "label": '5000',
         "q_inf": 16
@@ -335,6 +387,14 @@ if __name__=="__main__":
      },{
         "model_path": 'PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb16.60_LRsgdr0.001_500samples/',
         "label": '500',
+        "q_inf": 16
+     },{
+        "model_path": 'PODANN/PODANN_tf_sfarhat_diff_svd_Lay[200, 200]_Emb16.60_LRsgdr0.001/',
+        "label": 'farhat',
+        "q_inf": 16
+     },{
+        "model_path": 'POD/POD_Emb16/',
+        "label": 'POD',
         "q_inf": 16
      },{
         "model_path": 'PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb18.60_LRsgdr0.001/',
@@ -349,6 +409,14 @@ if __name__=="__main__":
         "label": '500',
         "q_inf": 18
      },{
+        "model_path": 'PODANN/PODANN_tf_sfarhat_diff_svd_Lay[200, 200]_Emb18.60_LRsgdr0.001/',
+        "label": 'farhat',
+        "q_inf": 18
+     },{
+        "model_path": 'POD/POD_Emb18/',
+        "label": 'POD',
+        "q_inf": 18
+     },{
         "model_path": 'PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb20.60_LRsgdr0.001/',
         "label": '5000',
         "q_inf": 20
@@ -359,6 +427,22 @@ if __name__=="__main__":
      },{
         "model_path": 'PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb20.60_LRsgdr0.001_500samples/',
         "label": '500',
+        "q_inf": 20
+     },{
+        "model_path": 'PODANN/PODANN_tf_srmixed_0.1-0.9_diff_svd_white_nostand_Lay[200, 200]_Emb20.60_LRsgdr0.001/',
+        "label": '0.9',
+        "q_inf": 20
+     },{
+        "model_path": 'PODANN/PODANN_tf_srmixed_0.01-0.99_diff_svd_white_nostand_Lay[200, 200]_Emb20.60_LRsgdr0.001/',
+        "label": '0.5',
+        "q_inf": 20
+     },{
+        "model_path": 'PODANN/PODANN_tf_sfarhat_diff_svd_Lay[200, 200]_Emb20.60_LRsgdr0.001/',
+        "label": 'farhat',
+        "q_inf": 20
+     },{
+        "model_path": 'POD/POD_Emb20/',
+        "label": 'POD',
         "q_inf": 20
      }
     ]

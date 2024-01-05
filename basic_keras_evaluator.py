@@ -47,8 +47,11 @@ class BasicKerasEvaluator():
         self.arch_config=self.train_config['architecture']
 
     def get_last_best_filename(self, model_weights_path, prefix):
-        matching_files = [file for file in os.listdir(model_weights_path) if file.startswith(prefix)]
-        highest_filename = sorted(matching_files, key=lambda x: int(x[len(prefix):][:-len('.h5')]))[-1]
+        if os.path.exists(prefix+'best.npy'):
+            highest_filename=prefix+'best.npy'
+        else:
+            matching_files = [file for file in os.listdir(model_weights_path) if file.startswith(prefix)]
+            highest_filename = sorted(matching_files, key=lambda x: int(x[len(prefix):][:-len('.h5')]))[-1]
         return highest_filename
 
     def define_network(self):

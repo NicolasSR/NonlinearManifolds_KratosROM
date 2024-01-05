@@ -8,10 +8,10 @@ import tensorflow as tf
 
 import time
 
-class S_Farhat_Strategy_KerasModel(keras.Model):
+class S_Only_Strategy_KerasModel(keras.Model):
 
     def __init__(self, prepost_processor, kratos_simulation, strategy_config, *args, **kwargs):
-        super(S_Farhat_Strategy_KerasModel,self).__init__(*args,**kwargs)
+        super(S_Only_Strategy_KerasModel,self).__init__(*args,**kwargs)
 
         self.prepost_processor = prepost_processor
         self.kratos_simulation = kratos_simulation
@@ -27,11 +27,16 @@ class S_Farhat_Strategy_KerasModel(keras.Model):
             self.r_loss_scale = self.default_loss_scale
 
         self.run_eagerly = False
+        
+        self.rescaling_factor_x=1.0
 
         self.loss_x_tracker = keras.metrics.Mean(name="loss_x")
         self.loss_r_tracker = keras.metrics.Mean(name="loss_r")
 
         self.sample_gradient_sum_functions_list=None
+
+        self.gradients_max=0.0
+        self.gradients_mean=0.0
     
     @tf.function
     def default_loss_scale(self, err_r):
@@ -52,18 +57,25 @@ class S_Farhat_Strategy_KerasModel(keras.Model):
         return v_loss_x, x_pred_denorm
     
     @tf.function
-    def get_gradients(self, trainable_vars, input_batch, target_snapshot_batch):
+    def get_gradients(self, trainable_vars, input_batch, v_loss_x_batch):
 
-        q_target_batch=self.prepost_processor.preprocess_nn_output_data_tf(target_snapshot_batch)
+        v_loss_batch = 2*v_loss_x_batch/self.rescaling_factor_x
+        # tf.print(self.rescaling_factor_x)
 
         with tf.GradientTape(persistent=False) as tape_d:
             tape_d.watch(trainable_vars)
-            q_pred_batch = self(input_batch, training=True)
-            q_error_squared = tf.math.reduce_mean(tf.math.square(q_pred_batch-q_target_batch), axis=1)
-            q_loss = tf.math.reduce_mean(q_error_squared)
-        grad_loss=tape_d.gradient(q_loss, trainable_vars)
+            x_pred_batch = self(input_batch, training=True)
+            x_pred_denorm_batch = self.prepost_processor.postprocess_output_data_tf(x_pred_batch, (input_batch,None))
+            v_u_dotprod = tf.math.reduce_mean(tf.math.multiply(v_loss_batch, x_pred_denorm_batch), axis=1)
+            v_u_dotprod_mean = tf.math.reduce_mean(v_u_dotprod)
+        grad_loss=tape_d.gradient(v_u_dotprod_mean, trainable_vars)
+        # tf.print(grad_loss[0])
 
-        return grad_loss, q_loss
+        # v_u_dotprod_mean = v_u_dotprod_mean * 1594
+        
+        # tf.print(grad_loss[0])
+
+        return grad_loss
 
     def generate_gradient_sum_functions(self):
         # @tf.function
@@ -78,76 +90,64 @@ class S_Farhat_Strategy_KerasModel(keras.Model):
 
     def update_rescaling_factors(self, S_true, R_true):
 
-        # S_recons_aux1 = self.prepost_processor.preprocess_nn_output_data(S_true)
-        # S_recons_aux2, _ =self.prepost_processor.preprocess_input_data(S_true)
-        # S_recons = self.prepost_processor.postprocess_output_data(np.zeros(S_recons_aux1.shape), (S_recons_aux2, None))
+        S_recons_aux1 = self.prepost_processor.preprocess_nn_output_data(S_true)
+        S_recons_aux2, _ =self.prepost_processor.preprocess_input_data(S_true)
+        S_recons = self.prepost_processor.postprocess_output_data(np.zeros(S_recons_aux1.shape), (S_recons_aux2, None))
 
-        # # rescaling_factor_x = np.linalg.norm(S_recons-S_true)**2/(S_true.shape[0]*S_true.shape[1])
-        # rescaling_factor_x = np.mean(np.square(S_recons-S_true))
+        # rescaling_factor_x = np.linalg.norm(S_recons-S_true)**2/(S_true.shape[0]*S_true.shape[1])
+        rescaling_factor_x = np.mean(np.square(S_recons-S_true))
         
-        # self.rescaling_factor_x = rescaling_factor_x
+        self.rescaling_factor_x = rescaling_factor_x
 
-        # print('Updated gradient rescaling factors. x: ' + str(self.rescaling_factor_x))
-        pass
+        print('Updated gradient rescaling factors. x: ' + str(self.rescaling_factor_x))
 
     def train_step(self,data):
         input_batch, (target_snapshot_batch,target_aux_batch) = data # target_aux is the reference force or residual, depending on the settings
         trainable_vars = self.trainable_variables
 
+        v_loss_x_batch, x_pred_denorm_batch = self.get_v_loss_x(input_batch, target_snapshot_batch)
+        loss_x_batch = tf.math.reduce_mean(tf.math.square(v_loss_x_batch), axis=1)
 
-        # v_loss_x_batch, x_pred_denorm_batch = self.get_v_loss_x(input_batch, target_snapshot_batch)
-        # loss_x_batch = tf.math.reduce_sum(tf.math.square(v_loss_x_batch), axis=1)
+        err_r_batch = self.get_err_r(x_pred_denorm_batch, target_aux_batch)
+        loss_r_batch = self.r_loss_scale(err_r_batch)
 
-        # err_r_batch = self.get_err_r(x_pred_denorm_batch, target_aux_batch)
-        # loss_r_batch = self.r_loss_scale(err_r_batch)
+        total_loss_x=tf.math.reduce_mean(loss_x_batch)
+        total_loss_r=tf.math.reduce_mean(loss_r_batch)
+        # total_loss_r=tf.math.reduce_mean(1)
 
-        # total_loss_x=tf.math.reduce_mean(loss_x_batch)
-        # total_loss_r=tf.math.reduce_mean(loss_r_batch)
-
-        grad_loss, total_loss_x = self.get_gradients(trainable_vars, input_batch, target_snapshot_batch)
+        grad_loss = self.get_gradients(trainable_vars, input_batch, v_loss_x_batch)
 
         for i, grad in enumerate(grad_loss):
-            tf.print(tf.reduce_max(tf.math.abs(grad_loss[i])))
-            tf.print(tf.reduce_mean(tf.math.abs(grad_loss[i])))
-            tf.print(tf.reduce_min(tf.math.abs(grad_loss[i])))
-            # tf.print(self.rescaling_factor_x)
-            tf.print()
+            self.gradients_max=np.max(tf.reduce_max(tf.math.abs(grad_loss[i])),self.gradients_max)
+            self.gradients_mean+=tf.reduce_mean(tf.math.abs(grad_loss[i]))/(5000.0*len(grad_loss))
 
         self.optimizer.apply_gradients(zip(grad_loss, trainable_vars))
-        # tf.print(self.optimizer)
 
         # Compute our own metrics
         self.loss_x_tracker.update_state(total_loss_x)
-        # self.loss_r_tracker.update_state(total_loss_r)
-        return {"loss_x": self.loss_x_tracker.result()}
-        # return {"loss_x": self.loss_x_tracker.result(), "loss_r": self.loss_r_tracker.result()}
+        self.loss_r_tracker.update_state(total_loss_r)
+        return {"loss_x": self.loss_x_tracker.result(), "loss_r": self.loss_r_tracker.result()}
         # return total_loss_x, grad_loss
 
     def test_step(self, data):
         input_batch, (target_snapshot_batch,target_aux_batch) = data
 
-        # x_pred_batch = self(input_batch, training=False)
-        # x_pred_denorm_batch = self.prepost_processor.postprocess_output_data_tf(x_pred_batch,(input_batch,None))
-        # err_x_batch = target_snapshot_batch - x_pred_denorm_batch
-        # loss_x_batch = tf.math.reduce_sum(tf.math.square(err_x_batch), axis=1)
+        x_pred_batch = self(input_batch, training=False)
+        x_pred_denorm_batch = self.prepost_processor.postprocess_output_data_tf(x_pred_batch,(input_batch,None))
+        err_x_batch = target_snapshot_batch - x_pred_denorm_batch
+        loss_x_batch = tf.math.reduce_mean(tf.math.square(err_x_batch), axis=1)
 
-        # err_r_batch = self.get_err_r(x_pred_denorm_batch, target_aux_batch)
-        # loss_r_batch = self.r_loss_scale(err_r_batch)
+        err_r_batch = self.get_err_r(x_pred_denorm_batch, target_aux_batch)
+        loss_r_batch = self.r_loss_scale(err_r_batch)
 
-        q_target_batch=self.prepost_processor.preprocess_nn_output_data_tf(target_snapshot_batch)
-        q_pred_batch = self(input_batch, training=True)
-        q_error_squared = tf.math.reduce_mean(tf.math.square(q_pred_batch-q_target_batch), axis=1)
-        q_loss = tf.math.reduce_mean(q_error_squared)
-        total_loss_x = q_loss
-
-        # total_loss_x=tf.math.reduce_mean(loss_x_batch)
-        # total_loss_r=tf.math.reduce_mean(loss_r_batch)
+        total_loss_x=tf.math.reduce_mean(loss_x_batch)
+        total_loss_r=tf.math.reduce_mean(loss_r_batch)
+        # total_loss_r=tf.math.reduce_mean(1)
 
         # Compute our own metrics
         self.loss_x_tracker.update_state(total_loss_x)
-        # self.loss_r_tracker.update_state(total_loss_r)
-        return {"loss_x": self.loss_x_tracker.result()}
-        # return {"loss_x": self.loss_x_tracker.result(), "loss_r": self.loss_r_tracker.result()}
+        self.loss_r_tracker.update_state(total_loss_r)
+        return {"loss_x": self.loss_x_tracker.result(), "loss_r": self.loss_r_tracker.result()}
 
     @property
     def metrics(self):

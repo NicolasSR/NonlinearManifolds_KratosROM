@@ -30,7 +30,8 @@ tf.keras.backend.set_floatx('float64')
 if __name__ == "__main__":
 
     working_path=''
-    model_path=working_path+'saved_models_cantilever_big_range/PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb6.60_LRsgdr0.001/'
+    model_path=working_path+'saved_models_cantilever_big_range/PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb20.60_LRsgdr0.001/'
+    # model_path=working_path+'saved_models_cantilever_big_range/PODANN/PODANN_tf_sfarhat_diff_svd_Lay[200, 200]_Emb6.60_LRsgdr0.001/'
 
     with open(model_path+"train_config.npy", "rb") as train_config_file:
         train_config = np.load(train_config_file,allow_pickle='TRUE').item()
@@ -54,6 +55,13 @@ if __name__ == "__main__":
     S_in, _=prepost_processor.preprocess_input_data(S_test)
 
     plt.boxplot(np.concatenate([S_in,S_out], axis=1))
+    ax=plt.gca()
+    every_nth = 10
+    for n, label in enumerate(ax.xaxis.get_ticklabels()):
+        if (n+1) % every_nth != 0:
+            label.set_visible(False)
+    plt.xlabel(r'Mode of $q$')
+    plt.ylabel('Values of each mode from all training samples')
     plt.show()
 
     print('======= Instantiating TF Model =======')
@@ -67,4 +75,5 @@ if __name__ == "__main__":
     rel_err_features = np.abs(Q_sup_pred-S_out)/np.abs(S_out)
 
     plt.boxplot(rel_err_features)
+    plt.semilogy()
     plt.show()

@@ -193,6 +193,43 @@ def join_datasets(dataset_path):
     np.save(dataset_path+"S_test_linear.npy", S)
     print(S.shape)
 
+def test_whitening_stuff(dataset_path):
+    S=np.load(dataset_path+"S_train.npy")
+
+    # mean_list=np.mean(S, axis=0)
+    # S = S-mean_list
+
+    S_scaled=S/np.sqrt(S.shape[0])
+    # S_scaled=S
+    phi, sigma, _ = np.linalg.svd(S_scaled.T)
+    phi=phi[:,:175]
+    sigma=sigma[:175]
+    print(phi.shape)
+
+    output_data=S.copy()
+    output_data=np.divide(np.matmul(phi.T,output_data.T).T,sigma)
+    # output_data=np.matmul(phi.T,output_data.T).T
+
+    print(output_data.shape)
+
+    corr_mat = output_data.T@output_data
+
+    print(corr_mat)
+
+    print(np.std(output_data, axis=0))
+
+    corr_max=np.max(np.abs(corr_mat))
+    corr_min=np.min(np.abs(corr_mat))
+    print(corr_min)
+    print(corr_max)
+    plt.imshow((np.abs(corr_mat)-corr_min)/(corr_max-corr_min))
+    # plt.imshow(np.array([[1.0,0.0],[0.0,1.0]]))
+    plt.show()
+
+    plt.boxplot(output_data[:,:60])
+    plt.show()
+
+
 if __name__ == "__main__":
 
     # train_config = {
@@ -223,6 +260,7 @@ if __name__ == "__main__":
     # generate_finetune_datasets(dataset_path)
     # generate_augm_finetune_datasets(dataset_path, kratos_simulation, 3)
     # generate_augm_finetune_dataset_soriginal(dataset_path, kratos_simulation, 3)
-    generate_residuals_noforce(dataset_path, kratos_simulation)
+    # generate_residuals_noforce(dataset_path, kratos_simulation)
     # generate_residuals_noforce('', kratos_simulation)
     # join_datasets(dataset_path)
+    test_whitening_stuff(dataset_path)
