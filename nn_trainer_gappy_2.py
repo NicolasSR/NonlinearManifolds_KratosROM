@@ -90,7 +90,7 @@ class NN_Trainer():
 
         F_train = np.load(self.train_config['dataset_path']+'F_train.npy')
         F_val = np.load(self.train_config['dataset_path']+'F_val.npy')
-        non_cropped_zone = [[-1000,1000],[-1000,1000]]
+        non_cropped_zone = np.array([[-1000,1000],[-1000,1000]])
 
         gap_sample_ids_train=np.squeeze(np.argwhere((F_train[:,0,0]>non_cropped_zone[0,0]) & (F_train[:,0,0]<non_cropped_zone[0,1]) & (F_train[:,6,1]>non_cropped_zone[1,0]) & (F_train[:,6,1]<non_cropped_zone[1,1])),axis=1)
         gap_sample_ids_val=np.squeeze(np.argwhere((F_val[:,0,0]>non_cropped_zone[0,0]) & (F_val[:,0,0]<non_cropped_zone[0,1]) & (F_val[:,6,1]>non_cropped_zone[1,0]) & (F_val[:,6,1]<non_cropped_zone[1,1])),axis=1)
@@ -98,7 +98,7 @@ class NN_Trainer():
         S_FOM_orig = arch_factory.get_orig_fom_snapshots(self.train_config['dataset_path'])
         S_FOM_orig = S_FOM_orig[gap_sample_ids_train]
 
-        arch_factory.configure_processor_non_saved(prepost_processor, S_FOM_orig, crop_mat_tf, crop_mat_scp)
+        arch_factory.configure_prepost_processor_non_saved(prepost_processor, S_FOM_orig, crop_mat_tf, crop_mat_scp)
 
         print(gap_sample_ids_train.shape)
         print(gap_sample_ids_val.shape)

@@ -123,6 +123,11 @@ class PODANN_Architecture_Factory(Base_Architecture_Factory):
         self.snapshot_size=S_flat_orig.shape[1]
         return
     
+    def configure_prepost_processor_non_saved(self, prepost_processor, S_flat_orig, crop_mat_tf, crop_mat_scp):
+        prepost_processor.configure_processor_non_saved(S_flat_orig, self.arch_config["q_inf_size"], self.arch_config["q_sup_size"], crop_mat_tf, crop_mat_scp)
+        self.snapshot_size=S_flat_orig.shape[1]
+        return
+    
     def get_custom_LR_scheduler(self):
         return self.get_custom_LR_scheduler_TF()
 
