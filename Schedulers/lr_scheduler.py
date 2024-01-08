@@ -50,6 +50,13 @@ def get_lr_schedule_func(lr_config):
         else:
             new_lr=lr
         return new_lr
+    
+    def lr_binary_schedule(epoch, lr):
+        if epoch<lr_config[3]:
+            new_lr=lr_config[1]
+        else:
+            new_lr=lr_config[2]
+        return new_lr
 
     def lr_const_schedule(epoch, lr):
         new_lr=lr_config[1]
@@ -63,6 +70,8 @@ def get_lr_schedule_func(lr_config):
         lr_schedule_func = lr_tri2_schedule
     elif lr_config[0]=='sgdr':
         lr_schedule_func = lr_sgdr_schedule
+    elif lr_config[0]=='binary':
+        lr_schedule_func = lr_binary_schedule
     else:
         print('Unvalid lr scheduler')
         lr_schedule_func = None
