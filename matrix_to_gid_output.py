@@ -83,11 +83,11 @@ def print_results_to_gid(model_part, snapshot_matrix, residuals_matrix):
 if __name__ == "__main__":
 
     # snapshots_matrix=np.load('saved_models_cantilever_big_range/POD/POD_Emb20/NMROM_simulation_results_random300/ROM_snaps_converged_corrected.npy')
-    snapshots_matrix=np.load('saved_models_cantilever_big_range/PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb12.60_LRsgdr0.001/NMROM_simulation_results_random300/ROM_snaps_converged_corrected.npy')
+    snapshots_matrix=np.load('saved_models_cantilever_big_range/PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb6.60_LRsgdr0.001_slower/NMROM_simulation_results_random300/ROM_snaps_converged_corrected.npy')
     # snapshots_matrix=np.load('Quad_x_snapshots.npy')
     # snapshots_matrix=np.load('Rel_quad_scipy_diff.npy')
     # snapshots_matrix=np.load('FOM_snaps_30steps.npy')
-    reactions_matrix=np.load('saved_models_cantilever_big_range/PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb12.60_LRsgdr0.001/NMROM_simulation_results_random300/ROM_residuals_converged_corrected.npy')
+    reactions_matrix=np.load('saved_models_cantilever_big_range/PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb6.60_LRsgdr0.001_slower/NMROM_simulation_results_random300/ROM_residuals_converged_corrected.npy')
     # reactions_matrix=np.load('Quad_reactions_snapshots.npy')
 
     # reactions_matrix_log=np.log(1+np.abs(reactions_matrix))

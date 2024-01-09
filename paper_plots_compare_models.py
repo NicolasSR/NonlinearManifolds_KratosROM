@@ -34,7 +34,7 @@ class Model_Info:
 
         self.non_converged_samples = 0
 
-        if "tf_ronly" in model_path:
+        if "tf_ronly" in model_path or "tf_srmixed" in model_path:
             best_type_decorator = '_bestr_'
         elif "tf_sonly" in model_path:
             best_type_decorator = '_bestx_'
@@ -257,7 +257,7 @@ def plot_rRorce_error(model_info_list):
             PODANN_rLoss_recons.append(model_info.recons_rForce_frobErr)
             PODANN_rLoss_nmrom.append(model_info.nmrom_rForce_frobErr)
             PODANN_rLoss_q.append(model_info.q_inf)
-        if model_info.label=="rLoss_fine":
+        if model_info.label=="rLoss_finetuned":
             PODANN_rLoss_fine_recons.append(model_info.recons_rForce_frobErr)
             PODANN_rLoss_fine_nmrom.append(model_info.nmrom_rForce_frobErr)
             PODANN_rLoss_fine_q.append(model_info.q_inf)
@@ -391,38 +391,50 @@ if __name__=="__main__":
         "label": 'rLoss',
         "q_inf": 20
      },{
-   #      "model_path": 'PODANN/PODANN_tf_ronly_Cont_diff_svd_white_nostand_Lay[200, 200]_Emb6.60_LRsgdr0.0001/',
+        "model_path": 'PODANN/PODANN_tf_ronly_Cont_diff_svd_white_nostand_Lay[200, 200]_Emb6.60_LRsgdr0.0001_slower/',
+        "label": 'rLoss_finetuned',
+        "q_inf": 6
+   #   },{
+   #      "model_path": 'PODANN/PODANN_tf_srmixed_diff_svd_white_nostand_Lay[200, 200]_Emb6.60_LRsgdr0.001_slower_binary/',
    #      "label": 'rLoss_finetuned',
    #      "q_inf": 6
+     },{
+        "model_path": 'PODANN/PODANN_tf_ronly_Cont_diff_svd_white_nostand_Lay[200, 200]_Emb8.60_LRsgdr0.0001_slower/',
+        "label": 'rLoss_finetuned',
+        "q_inf": 8
+     },{
+        "model_path": 'PODANN/PODANN_tf_ronly_Cont_diff_svd_white_nostand_Lay[200, 200]_Emb10.60_LRsgdr0.0001_slower/',
+        "label": 'rLoss_finetuned',
+        "q_inf": 10
+     },{
+        "model_path": 'PODANN/PODANN_tf_ronly_Cont_diff_svd_white_nostand_Lay[200, 200]_Emb12.60_LRsgdr0.0001_slower/',
+        "label": 'rLoss_finetuned',
+        "q_inf": 12
+     },{
+        "model_path": 'PODANN/PODANN_tf_ronly_Cont_diff_svd_white_nostand_Lay[200, 200]_Emb14.60_LRsgdr0.0001_slower/',
+        "label": 'rLoss_finetuned',
+        "q_inf": 14
    #   },{
-   #      "model_path": 'PODANN/PODANN_tf_ronly_Cont_diff_svd_white_nostand_Lay[200, 200]_Emb8.60_LRsgdr0.0001/',
-   #      "label": 'rLoss_finetuned',
-   #      "q_inf": 8
-   #   },{
-   #      "model_path": 'PODANN/PODANN_tf_ronly_Cont_diff_svd_white_nostand_Lay[200, 200]_Emb10.60_LRsgdr0.0001/',
-   #      "label": 'rLoss_finetuned',
-   #      "q_inf": 10
-   #   },{
-   #      "model_path": 'PODANN/PODANN_tf_ronly_Cont_diff_svd_white_nostand_Lay[200, 200]_Emb12.60_LRsgdr0.0001/',
-   #      "label": 'rLoss_finetuned',
-   #      "q_inf": 12
-   #   },{
-   #      "model_path": 'PODANN/PODANN_tf_ronly_Cont_diff_svd_white_nostand_Lay[200, 200]_Emb14.60_LRsgdr0.0001/',
+   #      "model_path": 'PODANN/PODANN_tf_srmixed_diff_svd_white_nostand_Lay[200, 200]_Emb14.60_LRsgdr0.001_slower_binary/',
    #      "label": 'rLoss_finetuned',
    #      "q_inf": 14
+     },{
+        "model_path": 'PODANN/PODANN_tf_ronly_Cont_diff_svd_white_nostand_Lay[200, 200]_Emb16.60_LRsgdr0.0001_slower/',
+        "label": 'rLoss_finetuned',
+        "q_inf": 16
+     },{
+        "model_path": 'PODANN/PODANN_tf_ronly_Cont_diff_svd_white_nostand_Lay[200, 200]_Emb18.60_LRsgdr0.0001_slower/',
+        "label": 'rLoss_finetuned',
+        "q_inf": 18
    #   },{
-   #      "model_path": 'PODANN/PODANN_tf_ronly_Cont_diff_svd_white_nostand_Lay[200, 200]_Emb16.60_LRsgdr0.0001/',
-   #      "label": 'rLoss_finetuned',
-   #      "q_inf": 16
-   #   },{
-   #      "model_path": 'PODANN/PODANN_tf_ronly_Cont_diff_svd_white_nostand_Lay[200, 200]_Emb18.60_LRsgdr0.0001/',
-   #      "label": 'rLoss_finetuned',
-   #      "q_inf": 18
-   #   },{
-   #      "model_path": 'PODANN/PODANN_tf_ronly_Cont_diff_svd_white_nostand_Lay[200, 200]_Emb20.60_LRsgdr0.0001/',
+   #      "model_path": 'PODANN/PODANN_tf_ronly_Cont_diff_svd_white_nostand_Lay[200, 200]_Emb20.60_LRsgdr0.0001_slower/',
    #      "label": 'rLoss_finetuned',
    #      "q_inf": 20
    #   },{
+   #      "model_path": 'PODANN/PODANN_tf_srmixed_diff_svd_white_nostand_Lay[200, 200]_Emb20.60_LRsgdr0.001_slower_binary/',
+   #      "label": 'rLoss_finetuned',
+   #      "q_inf": 20
+     },{
         "model_path": 'PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb6.60_LRsgdr0.001_slower/',
         "label": 'sLoss',
         "q_inf": 6

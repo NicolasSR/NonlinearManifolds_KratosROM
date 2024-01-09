@@ -12,7 +12,9 @@ if __name__ == "__main__":
             # 'POD/POD_Emb15'
             # 'Quad/Quad_least_squares_scale_global_Emb6',
             # 'saved_models_cantilever_big_range/PODANN_Standalone/test_sonly_lrsgdr'
-            'saved_models_cantilever_big_range/PODANN/PODANN_tf_ronly_Cont_diff_svd_white_nostand_Lay[200, 200]_Emb6.60_LRsgdr0.0001_slower'
+            'saved_models_cantilever_big_range/PODANN/PODANN_tf_srmixed_diff_svd_white_nostand_Lay[200, 200]_Emb6.60_LRsgdr0.001_slower_binary',
+            'saved_models_cantilever_big_range/PODANN/PODANN_tf_srmixed_diff_svd_white_nostand_Lay[200, 200]_Emb14.60_LRsgdr0.001_slower_binary',
+            'saved_models_cantilever_big_range/PODANN/PODANN_tf_srmixed_diff_svd_white_nostand_Lay[200, 200]_Emb20.60_LRsgdr0.001_slower_binary'
             # 'saved_models_cantilever_big_range/PODANN/Gappy_ronly_20.60'
             # TEST_RONLY_Finetune
             # 'saved_models_cantilever_big_range/POD/POD_Emb6'

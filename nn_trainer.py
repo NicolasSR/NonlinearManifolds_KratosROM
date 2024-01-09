@@ -132,8 +132,6 @@ class NN_Trainer():
         print('=========== Starting training routine ============')
         history = arch_factory.train_network(network, input_data, target_data, val_input, val_target)
 
-        # np.save(self.model_path+"gradients.npy", np.array(network.gradients_max, network.gradients_mean))
-
         print('=========== Saving weights and history ============')
         network.save_weights(self.model_path+"model_weights.h5")
         with open(self.model_path+"history.json", "w") as history_file:
