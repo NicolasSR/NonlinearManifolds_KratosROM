@@ -79,7 +79,7 @@ if __name__ == "__main__":
         # 'saved_models_cantilever_big_range/POD/POD_Emb14',
         # 'Quad/Quad_least_squares_scale_global_Emb6',
         # 'PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[40, 40]_Emb6.20_LRsgdr0.001',
-        'saved_models_cantilever_big_range/PODANN/PODANN_tf_ronly_Cont_diff_svd_white_nostand_Lay[200, 200]_Emb14.60_LRsgdr0.0001'
+        'saved_models_cantilever_big_range/PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb16.60_LRsgdr0.001_slower'
         # 'saved_models_cantilever_big_range/POD/POD_Emb6'
     ]
 

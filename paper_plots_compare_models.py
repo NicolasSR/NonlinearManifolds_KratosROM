@@ -359,99 +359,99 @@ if __name__=="__main__":
     # exit()
 
     result_cases = [{
-        "model_path": 'PODANN/PODANN_tf_ronly_diff_svd_white_nostand_Lay[200, 200]_Emb6.60_LRsgdr0.001/',
+        "model_path": 'PODANN/PODANN_tf_ronly_diff_svd_white_nostand_Lay[200, 200]_Emb6.60_LRsgdr0.001_slower/',
         "label": 'rLoss',
         "q_inf": 6
      },{
-        "model_path": 'PODANN/PODANN_tf_ronly_diff_svd_white_nostand_Lay[200, 200]_Emb8.60_LRsgdr0.001/',
+        "model_path": 'PODANN/PODANN_tf_ronly_diff_svd_white_nostand_Lay[200, 200]_Emb8.60_LRsgdr0.001_slower/',
         "label": 'rLoss',
         "q_inf": 8
      },{
-        "model_path": 'PODANN/PODANN_tf_ronly_diff_svd_white_nostand_Lay[200, 200]_Emb10.60_LRsgdr0.001/',
+        "model_path": 'PODANN/PODANN_tf_ronly_diff_svd_white_nostand_Lay[200, 200]_Emb10.60_LRsgdr0.001_slower/',
         "label": 'rLoss',
         "q_inf": 10
      },{
-        "model_path": 'PODANN/PODANN_tf_ronly_diff_svd_white_nostand_Lay[200, 200]_Emb12.60_LRsgdr0.001/',
+        "model_path": 'PODANN/PODANN_tf_ronly_diff_svd_white_nostand_Lay[200, 200]_Emb12.60_LRsgdr0.001_slower/',
         "label": 'rLoss',
         "q_inf": 12
      },{
-        "model_path": 'PODANN/PODANN_tf_ronly_diff_svd_white_nostand_Lay[200, 200]_Emb14.60_LRsgdr0.001/',
+        "model_path": 'PODANN/PODANN_tf_ronly_diff_svd_white_nostand_Lay[200, 200]_Emb14.60_LRsgdr0.001_slower/',
         "label": 'rLoss',
         "q_inf": 14
      },{
-        "model_path": 'PODANN/PODANN_tf_ronly_diff_svd_white_nostand_Lay[200, 200]_Emb16.60_LRsgdr0.001/',
+        "model_path": 'PODANN/PODANN_tf_ronly_diff_svd_white_nostand_Lay[200, 200]_Emb16.60_LRsgdr0.001_slower/',
         "label": 'rLoss',
         "q_inf": 16
      },{
-        "model_path": 'PODANN/PODANN_tf_ronly_diff_svd_white_nostand_Lay[200, 200]_Emb18.60_LRsgdr0.001/',
+        "model_path": 'PODANN/PODANN_tf_ronly_diff_svd_white_nostand_Lay[200, 200]_Emb18.60_LRsgdr0.001_slower/',
         "label": 'rLoss',
         "q_inf": 18
      },{
-        "model_path": 'PODANN/PODANN_tf_ronly_diff_svd_white_nostand_Lay[200, 200]_Emb20.60_LRsgdr0.001/',
+        "model_path": 'PODANN/PODANN_tf_ronly_diff_svd_white_nostand_Lay[200, 200]_Emb20.60_LRsgdr0.001_slower/',
         "label": 'rLoss',
         "q_inf": 20
      },{
-        "model_path": 'PODANN/PODANN_tf_ronly_Cont_diff_svd_white_nostand_Lay[200, 200]_Emb6.60_LRsgdr0.0001/',
-        "label": 'rLoss_finetuned',
-        "q_inf": 6
-     },{
-        "model_path": 'PODANN/PODANN_tf_ronly_Cont_diff_svd_white_nostand_Lay[200, 200]_Emb8.60_LRsgdr0.0001/',
-        "label": 'rLoss_finetuned',
-        "q_inf": 8
-     },{
-        "model_path": 'PODANN/PODANN_tf_ronly_Cont_diff_svd_white_nostand_Lay[200, 200]_Emb10.60_LRsgdr0.0001/',
-        "label": 'rLoss_finetuned',
-        "q_inf": 10
-     },{
-        "model_path": 'PODANN/PODANN_tf_ronly_Cont_diff_svd_white_nostand_Lay[200, 200]_Emb12.60_LRsgdr0.0001/',
-        "label": 'rLoss_finetuned',
-        "q_inf": 12
-     },{
-        "model_path": 'PODANN/PODANN_tf_ronly_Cont_diff_svd_white_nostand_Lay[200, 200]_Emb14.60_LRsgdr0.0001/',
-        "label": 'rLoss_finetuned',
-        "q_inf": 14
-     },{
-        "model_path": 'PODANN/PODANN_tf_ronly_Cont_diff_svd_white_nostand_Lay[200, 200]_Emb16.60_LRsgdr0.0001/',
-        "label": 'rLoss_finetuned',
-        "q_inf": 16
-     },{
-        "model_path": 'PODANN/PODANN_tf_ronly_Cont_diff_svd_white_nostand_Lay[200, 200]_Emb18.60_LRsgdr0.0001/',
-        "label": 'rLoss_finetuned',
-        "q_inf": 18
-     },{
-        "model_path": 'PODANN/PODANN_tf_ronly_Cont_diff_svd_white_nostand_Lay[200, 200]_Emb20.60_LRsgdr0.0001/',
-        "label": 'rLoss_finetuned',
-        "q_inf": 20
-     },{
-        "model_path": 'PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb6.60_LRsgdr0.001/',
+   #      "model_path": 'PODANN/PODANN_tf_ronly_Cont_diff_svd_white_nostand_Lay[200, 200]_Emb6.60_LRsgdr0.0001/',
+   #      "label": 'rLoss_finetuned',
+   #      "q_inf": 6
+   #   },{
+   #      "model_path": 'PODANN/PODANN_tf_ronly_Cont_diff_svd_white_nostand_Lay[200, 200]_Emb8.60_LRsgdr0.0001/',
+   #      "label": 'rLoss_finetuned',
+   #      "q_inf": 8
+   #   },{
+   #      "model_path": 'PODANN/PODANN_tf_ronly_Cont_diff_svd_white_nostand_Lay[200, 200]_Emb10.60_LRsgdr0.0001/',
+   #      "label": 'rLoss_finetuned',
+   #      "q_inf": 10
+   #   },{
+   #      "model_path": 'PODANN/PODANN_tf_ronly_Cont_diff_svd_white_nostand_Lay[200, 200]_Emb12.60_LRsgdr0.0001/',
+   #      "label": 'rLoss_finetuned',
+   #      "q_inf": 12
+   #   },{
+   #      "model_path": 'PODANN/PODANN_tf_ronly_Cont_diff_svd_white_nostand_Lay[200, 200]_Emb14.60_LRsgdr0.0001/',
+   #      "label": 'rLoss_finetuned',
+   #      "q_inf": 14
+   #   },{
+   #      "model_path": 'PODANN/PODANN_tf_ronly_Cont_diff_svd_white_nostand_Lay[200, 200]_Emb16.60_LRsgdr0.0001/',
+   #      "label": 'rLoss_finetuned',
+   #      "q_inf": 16
+   #   },{
+   #      "model_path": 'PODANN/PODANN_tf_ronly_Cont_diff_svd_white_nostand_Lay[200, 200]_Emb18.60_LRsgdr0.0001/',
+   #      "label": 'rLoss_finetuned',
+   #      "q_inf": 18
+   #   },{
+   #      "model_path": 'PODANN/PODANN_tf_ronly_Cont_diff_svd_white_nostand_Lay[200, 200]_Emb20.60_LRsgdr0.0001/',
+   #      "label": 'rLoss_finetuned',
+   #      "q_inf": 20
+   #   },{
+        "model_path": 'PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb6.60_LRsgdr0.001_slower/',
         "label": 'sLoss',
         "q_inf": 6
      },{
-        "model_path": 'PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb8.60_LRsgdr0.001/',
+        "model_path": 'PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb8.60_LRsgdr0.001_slower/',
         "label": 'sLoss',
         "q_inf": 8
      },{
-        "model_path": 'PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb10.60_LRsgdr0.001/',
+        "model_path": 'PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb10.60_LRsgdr0.001_slower/',
         "label": 'sLoss',
         "q_inf": 10
      },{
-        "model_path": 'PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb12.60_LRsgdr0.001/',
+        "model_path": 'PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb12.60_LRsgdr0.001_slower/',
         "label": 'sLoss',
         "q_inf": 12
      },{
-        "model_path": 'PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb14.60_LRsgdr0.001/',
+        "model_path": 'PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb14.60_LRsgdr0.001_slower/',
         "label": 'sLoss',
         "q_inf": 14
      },{
-        "model_path": 'PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb16.60_LRsgdr0.001/',
+        "model_path": 'PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb16.60_LRsgdr0.001_slower/',
         "label": 'sLoss',
         "q_inf": 16
      },{
-        "model_path": 'PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb18.60_LRsgdr0.001/',
+        "model_path": 'PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb18.60_LRsgdr0.001_slower/',
         "label": 'sLoss',
         "q_inf": 18
      },{
-        "model_path": 'PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb20.60_LRsgdr0.001/',
+        "model_path": 'PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb20.60_LRsgdr0.001_slower/',
         "label": 'sLoss',
         "q_inf": 20
      },{

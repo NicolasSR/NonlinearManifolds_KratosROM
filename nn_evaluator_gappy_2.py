@@ -72,8 +72,9 @@ class NN_Evaluator():
 
 
     def get_last_best_filename(self, model_weights_path, prefix):
-        if os.path.exists(prefix+'best.npy'):
-            highest_filename=prefix+'best.npy'
+        print(model_weights_path+prefix+'best.h5')
+        if os.path.isfile(model_weights_path+prefix+'best.h5'):
+            highest_filename=prefix+'best.h5'
         else:
             matching_files = [file for file in os.listdir(model_weights_path) if file.startswith(prefix)]
             highest_filename = sorted(matching_files, key=lambda x: int(x[len(prefix):][:-len('.h5')]))[-1]
@@ -254,15 +255,14 @@ class NN_Evaluator():
         self.prepost_processor=arch_factory.prepost_processor_selector(self.working_path, self.train_config["dataset_path"])
 
         F_train = np.load(self.train_config['dataset_path']+'F_train.npy')
-        non_cropped_zone = [[-1000,1000],[-1000,1000]]
+        non_cropped_zone = np.array([[-1000,1000],[-1000,1000]])
 
         gap_sample_ids_train=np.squeeze(np.argwhere((F_train[:,0,0]>non_cropped_zone[0,0]) & (F_train[:,0,0]<non_cropped_zone[0,1]) & (F_train[:,6,1]>non_cropped_zone[1,0]) & (F_train[:,6,1]<non_cropped_zone[1,1])),axis=1)
 
         S_FOM_orig = arch_factory.get_orig_fom_snapshots(self.train_config['dataset_path'])
         S_FOM_orig = S_FOM_orig[gap_sample_ids_train]
 
-        S_FOM_orig = arch_factory.get_orig_fom_snapshots(self.train_config['dataset_path'])
-        arch_factory.configure_processor_non_saved(self.prepost_processor, S_FOM_orig, crop_mat_tf, crop_mat_scp)
+        arch_factory.configure_prepost_processor_non_saved(self.prepost_processor, S_FOM_orig, crop_mat_tf, crop_mat_scp)
 
         print('======= Instantiating TF Model =======')
         self.network, _, __ = arch_factory.define_network(self.prepost_processor, self.kratos_simulation)
@@ -281,6 +281,10 @@ class NN_Evaluator():
         S_test = np.delete(S_test, gap_sample_ids_test, axis=0)
         R_test = np.delete(R_test, gap_sample_ids_test, axis=0)
         F_test = np.delete(F_test, gap_sample_ids_test, axis=0)
+
+        # S_test = S_test[gap_sample_ids_test]
+        # R_test = R_test[gap_sample_ids_test]
+        # F_test = F_test[gap_sample_ids_test]
 
         S_pred = self.get_pred_snapshots_matrix(S_test)
         R_noForce_pred = self.get_pred_r_noForce_matrix(S_pred)

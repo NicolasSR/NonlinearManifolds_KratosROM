@@ -8,18 +8,22 @@ import tensorflow as tf
 
 import time
 
-class S_Only_Strategy_KerasModel(keras.Model):
+class R_Only_Strategy_KerasModel(keras.Model):
 
     def __init__(self, prepost_processor, kratos_simulation, strategy_config, *args, **kwargs):
-        super(S_Only_Strategy_KerasModel,self).__init__(*args,**kwargs)
+        super(R_Only_Strategy_KerasModel,self).__init__(*args,**kwargs)
 
         self.prepost_processor = prepost_processor
         self.kratos_simulation = kratos_simulation
 
         if strategy_config["r_loss_type"]=='norm':
+            self.get_v_loss_r = self.kratos_simulation.get_v_loss_rnorm_batch
             self.get_err_r = self.kratos_simulation.get_err_rnorm_batch
         elif strategy_config["r_loss_type"]=='diff':
+            self.get_v_loss_r = self.kratos_simulation.get_v_loss_rdiff_batch
             self.get_err_r = self.kratos_simulation.get_err_rdiff_batch
+        else:
+            self.get_v_loss_r = None
 
         if strategy_config["r_loss_log_scale"]==True:
             self.r_loss_scale = self.log_loss_scale
@@ -28,7 +32,7 @@ class S_Only_Strategy_KerasModel(keras.Model):
 
         self.run_eagerly = False
         
-        self.rescaling_factor_x=1.0
+        self.rescaling_factor_r=1.0
 
         self.loss_x_tracker = keras.metrics.Mean(name="loss_x")
         self.loss_r_tracker = keras.metrics.Mean(name="loss_r")
@@ -40,41 +44,30 @@ class S_Only_Strategy_KerasModel(keras.Model):
         self.grads_mean_tracker = keras.metrics.Sum(name="grads_mean")
     
     @tf.function
-    def default_loss_scale(self, err_r):
+    def default_loss_scale(self, err_r, v_loss_r=None):
         loss_r = tf.math.reduce_mean(tf.math.square(err_r), axis=1)
-        return loss_r
+        return loss_r, v_loss_r
     
     @tf.function
-    def log_loss_scale(self, err_r):
+    def log_loss_scale(self, err_r, v_loss_r=None):
         err_r_quad = tf.math.reduce_mean(tf.math.square(err_r), axis=1)
         loss_r = tf.math.log(err_r_quad+1)
-        return loss_r
+        if v_loss_r is not None:
+            v_loss_r=tf.transpose(tf.transpose(v_loss_r)/(err_r_quad+1))
+        return loss_r, v_loss_r
     
     @tf.function
-    def get_v_loss_x(self, input, target_snapshot):
-        x_pred = self(input, training=True)
-        x_pred_denorm = self.prepost_processor.postprocess_output_data_tf(x_pred, (input,None))
-        v_loss_x = x_pred_denorm - target_snapshot  # We get the loss on the error for the denormalised snapshot
-        return v_loss_x, x_pred_denorm
-    
-    @tf.function
-    def get_gradients(self, trainable_vars, input_batch, v_loss_x_batch):
+    def get_gradients(self, trainable_vars, input_batch, v_loss_r_batch):
 
-        v_loss_batch = 2*v_loss_x_batch/self.rescaling_factor_x
-        # tf.print(self.rescaling_factor_x)
+        v_loss = 2*v_loss_r_batch/self.rescaling_factor_r
 
         with tf.GradientTape(persistent=False) as tape_d:
             tape_d.watch(trainable_vars)
-            x_pred_batch = self(input_batch, training=True)
-            x_pred_denorm_batch = self.prepost_processor.postprocess_output_data_tf(x_pred_batch, (input_batch,None))
-            v_u_dotprod = tf.math.reduce_mean(tf.math.multiply(v_loss_batch, x_pred_denorm_batch), axis=1)
+            x_pred = self(input_batch, training=True)
+            x_pred_denorm = self.prepost_processor.postprocess_output_data_tf(x_pred, (input_batch,None))
+            v_u_dotprod = tf.math.reduce_mean(tf.math.multiply(v_loss, x_pred_denorm), axis=1)
             v_u_dotprod_mean = tf.math.reduce_mean(v_u_dotprod)
         grad_loss=tape_d.gradient(v_u_dotprod_mean, trainable_vars)
-        # tf.print(grad_loss[0])
-
-        # v_u_dotprod_mean = v_u_dotprod_mean * 1594
-        
-        # tf.print(grad_loss[0])
 
         return grad_loss
 
@@ -94,29 +87,37 @@ class S_Only_Strategy_KerasModel(keras.Model):
         S_recons_aux1 = self.prepost_processor.preprocess_nn_output_data(S_true)
         S_recons_aux2, _ =self.prepost_processor.preprocess_input_data(S_true)
         S_recons = self.prepost_processor.postprocess_output_data(np.zeros(S_recons_aux1.shape), (S_recons_aux2, None))
-
-        # rescaling_factor_x = np.linalg.norm(S_recons-S_true)**2/(S_true.shape[0]*S_true.shape[1])
-        rescaling_factor_x = np.mean(np.square(S_recons-S_true))
         
-        self.rescaling_factor_x = rescaling_factor_x
+        err_r_batch, _ = self.get_v_loss_r(tf.constant(S_recons), tf.constant(R_true))
+        rescaling_factor_r = np.mean(np.square(err_r_batch.numpy()))
 
-        print('Updated gradient rescaling factors. x: ' + str(self.rescaling_factor_x))
+        self.rescaling_factor_r = rescaling_factor_r
+
+        print('Updated gradient rescaling factors. r: ' + str(self.rescaling_factor_r))
 
     def train_step(self,data):
         input_batch, (target_snapshot_batch,target_aux_batch) = data # target_aux is the reference force or residual, depending on the settings
         trainable_vars = self.trainable_variables
 
-        v_loss_x_batch, x_pred_denorm_batch = self.get_v_loss_x(input_batch, target_snapshot_batch)
-        loss_x_batch = tf.math.reduce_mean(tf.math.square(v_loss_x_batch), axis=1)
+        x_pred_batch = self(input_batch, training=True)
+        x_pred_denorm_batch = self.prepost_processor.postprocess_output_data_tf(x_pred_batch,(input_batch,None))
+        err_x_batch = target_snapshot_batch - x_pred_denorm_batch
+        loss_x_batch = tf.math.reduce_mean(tf.math.square(err_x_batch), axis=1)
 
-        err_r_batch = self.get_err_r(x_pred_denorm_batch, target_aux_batch)
-        loss_r_batch = self.r_loss_scale(err_r_batch)
+        err_r_batch, v_loss_r_batch = self.get_v_loss_r(x_pred_denorm_batch,target_aux_batch)
+        loss_r_batch, v_loss_r_batch = self.r_loss_scale(err_r_batch, v_loss_r_batch)
 
         total_loss_x=tf.math.reduce_mean(loss_x_batch)
         total_loss_r=tf.math.reduce_mean(loss_r_batch)
-        # total_loss_r=tf.math.reduce_mean(1)
 
-        grad_loss = self.get_gradients(trainable_vars, input_batch, v_loss_x_batch)
+        grad_loss = self.get_gradients(trainable_vars, input_batch, v_loss_r_batch)
+
+        # for i, grad in enumerate(grad_loss):
+        #     tf.print(tf.reduce_max(tf.math.abs(grad_loss[i])))
+        #     tf.print(tf.reduce_mean(tf.math.abs(grad_loss[i])))
+        #     tf.print(tf.reduce_min(tf.math.abs(grad_loss[i])))
+        #     tf.print(self.rescaling_factor_r)
+        #     tf.print()
 
         for i, grad in enumerate(grad_loss):
             # self.gradients_max=tf.math.maximum(tf.reduce_max(tf.math.abs(grad_loss[i])),self.gradients_max)
@@ -132,7 +133,7 @@ class S_Only_Strategy_KerasModel(keras.Model):
         self.grads_mean_tracker.update_state(gradients_mean)
 
         return {"loss_x": self.loss_x_tracker.result(), "loss_r": self.loss_r_tracker.result(), "grads_mean": self.grads_mean_tracker.result()}
-        # return total_loss_x, grad_loss
+        # return total_loss_r, grad_loss
 
     def test_step(self, data):
         input_batch, (target_snapshot_batch,target_aux_batch) = data
@@ -143,11 +144,10 @@ class S_Only_Strategy_KerasModel(keras.Model):
         loss_x_batch = tf.math.reduce_mean(tf.math.square(err_x_batch), axis=1)
 
         err_r_batch = self.get_err_r(x_pred_denorm_batch, target_aux_batch)
-        loss_r_batch = self.r_loss_scale(err_r_batch)
+        loss_r_batch, _ = self.r_loss_scale(err_r_batch)
 
         total_loss_x=tf.math.reduce_mean(loss_x_batch)
         total_loss_r=tf.math.reduce_mean(loss_r_batch)
-        # total_loss_r=tf.math.reduce_mean(1)
 
         # Compute our own metrics
         self.loss_x_tracker.update_state(total_loss_x)
@@ -163,14 +163,14 @@ class S_Only_Strategy_KerasModel(keras.Model):
         # `reset_states()` yourself at the time of your choosing.
         
         return [self.loss_x_tracker, self.loss_r_tracker, self.grads_mean_tracker]
-    
 
     def test_gradients(self, data, crop_mat_tf, crop_mat_scp):
         import matplotlib.pyplot as plt
 
         input_batch, (target_snapshot_batch,target_aux_batch) = data
 
-        sample_id=np.random.randint(0, input_batch.shape[0]-1, size=20)
+        # sample_id=np.random.randint(0, input_batch.shape[0]-1, size=20)
+        sample_id=[0,1,2,3,4,5,6,7,8,9]
         input=input_batch[sample_id]
         target_snapshot=target_snapshot_batch[sample_id]
         target_aux=target_aux_batch[sample_id]
@@ -227,6 +227,7 @@ class S_Only_Strategy_KerasModel(keras.Model):
 
             err_vec.append(np.abs(total_loss_w_ap.numpy()-total_loss_w_o.numpy()-first_order_term))
 
+
         square=np.power(eps_vec,2)
         plt.plot(eps_vec, square, "--", label="square")
         plt.plot(eps_vec, eps_vec, "--", label="linear")
@@ -235,3 +236,68 @@ class S_Only_Strategy_KerasModel(keras.Model):
         plt.yscale("log")
         plt.legend(loc="upper left")
         plt.show()
+
+    
+    def test_gradients_jacobian(self, data, crop_mat_tf, crop_mat_scp):
+        import matplotlib.pyplot as plt
+        import scipy
+
+        # input_batch, (target_snapshot_batch,target_aux_batch) = data
+        input_batch, (target_snapshot_batch,target_aux_batch) = data
+
+        sample_id=np.random.randint(0, input_batch.shape[0]-1)
+
+        target_snapshot=np.expand_dims(target_snapshot_batch[sample_id],axis=0)
+        target_aux=np.expand_dims(target_aux_batch[sample_id],axis=0)
+
+        print(crop_mat_scp.shape)
+        eye=np.eye(crop_mat_scp.shape[0])
+
+        v=np.random.rand(*target_snapshot.shape)
+        v=((eye-crop_mat_scp)@v.T).T
+        v=v/np.linalg.norm(v)
+
+        eps_vec = np.logspace(1, 10, 100)/1e9
+
+        b_target=self.kratos_simulation.get_r_batch_(target_snapshot).copy()
+        A_u0=self.kratos_simulation.get_A_(target_snapshot[0]).copy()
+
+        # print(A_u0)
+        Jac_err=np.random.rand(*A_u0.shape)
+
+        print('YAY')
+
+
+        err_vec=[]
+        for eps in eps_vec:
+            
+            v_eps=v*eps
+            u_approx=target_snapshot+v_eps
+            
+            b_approx=self.kratos_simulation.get_r_batch_(u_approx).copy()
+
+            # A_e_vec = self.kratos_simulation.get_A_e_vec_batch_(target_snapshot, v_eps).copy()
+
+
+            # A_u0=self.kratos_simulation.get_A_(target_snapshot[0]).copy()
+            # err=b_approx-b_target+(A_u0@v_eps.T).T
+            Jac_err=Jac_err/np.linalg.norm(Jac_err)*1e6
+            err=b_approx-b_target+((A_u0+Jac_err)@v_eps.T).T
+            # err=b_approx-b_target+((Jac_err)@v_eps.T).T
+        
+            # err=b_approx-b_target+A_e_vec
+
+            
+
+            err_vec.append(np.linalg.norm(err))
+
+
+        square=np.power(eps_vec,2)
+        plt.plot(eps_vec, square, "--", label="square")
+        plt.plot(eps_vec, eps_vec, "--", label="linear")
+        plt.plot(eps_vec, err_vec, label="error")
+        plt.xscale("log")
+        plt.yscale("log")
+        plt.legend(loc="upper left")
+        plt.show()
+

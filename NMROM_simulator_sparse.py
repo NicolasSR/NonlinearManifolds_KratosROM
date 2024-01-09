@@ -139,8 +139,8 @@ class NMROM_Simulator():
         self.dataset_path=working_path+self.train_config['dataset_path']
 
     def get_last_best_filename(self, model_weights_path, prefix):
-        if os.path.exists(prefix+'best.npy'):
-            highest_filename=prefix+'best.npy'
+        if os.path.exists(model_weights_path+prefix+'best.h5'):
+            highest_filename=prefix+'best.h5'
         else:
             matching_files = [file for file in os.listdir(model_weights_path) if file.startswith(prefix)]
             highest_filename = sorted(matching_files, key=lambda x: int(x[len(prefix):][:-len('.h5')]))[-1]
