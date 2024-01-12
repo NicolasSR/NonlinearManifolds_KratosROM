@@ -176,7 +176,7 @@ class NMROM_Simulator():
             #### 
 
             mu=np.concatenate([mu,mu_steps], axis=1)
-            return mu
+            return mu[:100]
         
         def UpdateProjectParametersRandom(parameters, mu=None):
             """

@@ -44,6 +44,9 @@ class NoTFTrain_Strategy_KerasModel(keras.Model):
     
     def generate_gradient_sum_functions(self):
         return
+    
+    def update_rescaling_factors(self, S_true, R_true):
+        pass
 
     def train_step(self,data):
         ## We already obtained the trained model via de PrePostProcessor, so there is nothing to train

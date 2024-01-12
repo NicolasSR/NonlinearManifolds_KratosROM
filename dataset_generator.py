@@ -174,7 +174,7 @@ if __name__ == "__main__":
 
         mu_steps=np.expand_dims(np.linalg.norm(mu, axis=1)//10,axis=1)
         mu=np.concatenate([mu,mu_steps], axis=1)
-        return mu[210:211]
+        return mu[:200]
         # return mu
     
     dataset_path='datasets_rubber_hyperelastic_cantilever_big_range/'

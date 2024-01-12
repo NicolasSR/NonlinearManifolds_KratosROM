@@ -4,6 +4,7 @@
 *.post.res
 *.post.msh
 *.odp
+*.txt
 **/__pycache__/
 /saved_models/
 /saved_models_cantilever_big_range/

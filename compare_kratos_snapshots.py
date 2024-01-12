@@ -76,10 +76,10 @@ def plot_error_over_parametric_space(S_fom, S_rom, F):
 if __name__ == "__main__":
 
     paths_list=[
-        # 'saved_models_cantilever_big_range/POD/POD_Emb14',
+        # 'saved_models_cantilever_big_range/POD/POD_Emb18',
         # 'Quad/Quad_least_squares_scale_global_Emb6',
         # 'PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[40, 40]_Emb6.20_LRsgdr0.001',
-        'saved_models_cantilever_big_range/PODANN/PODANN_tf_ronly_Cont_diff_svd_white_nostand_Lay[200, 200]_Emb8.60_LRsgdr0.0001_slower'
+        'saved_models_cantilever_big_range/PODANN/PODANN_tf_sonly_diff_svd_white_nostand_Lay[200, 200]_Emb20.60_LRsgdr0.001_slower'
         # 'saved_models_cantilever_big_range/POD/POD_Emb6'
     ]
 
@@ -104,6 +104,10 @@ if __name__ == "__main__":
 
         print('Shape S_fom:', S_fom.shape)
         print('Shape S_rom:', S_rom.shape)
+
+        # nan_rows = np.unique(np.argwhere(np.isnan(S_rom))[:,0])
+        # S_fom=np.delete(S_fom, nan_rows, axis=0)
+        # S_rom=np.delete(S_rom, nan_rows, axis=0)
 
         print('Error norms')
         calculate_X_norm_error(S_fom, S_rom)

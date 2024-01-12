@@ -138,7 +138,7 @@ class NMROM_POD_Simulator():
             #### 
 
             mu=np.concatenate([mu,mu_steps], axis=1)
-            return mu
+            return mu[:200]
         
         def UpdateProjectParametersRandom(parameters, mu=None):
             """
